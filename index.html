@@ -3,7 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f5f3ff" />
+    <meta name="theme-color" content="#f8f7fc" />
+    <script>
+      (() => {
+        const savedTheme = localStorage.getItem('mywallet360-theme')
+        const theme = savedTheme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        document.documentElement.dataset.theme = theme
+        document.documentElement.style.colorScheme = theme
+        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#0b0f14' : '#f8f7fc'
+      })()
+    </script>
     <meta
       name="description"
       content="MyWallet360 financial identity and portfolio dashboard"
