@@ -2,13 +2,17 @@ import { useState } from 'react'
 import { Icon as IconifyIcon } from '@iconify/react'
 import {
   Activity as ActivityIcon,
+  ArrowLeftRight,
   Bell,
   ChevronDown,
+  CircleDollarSign,
   Gem,
   Images,
   Landmark,
+  Layers3,
   Moon,
   Network,
+  Radio,
   Search,
   ShieldCheck,
   Sparkles,
@@ -112,6 +116,13 @@ const flowCategories = [
   { label: 'DeFi', value: '$2,100', percent: '30%', tone: 'blue', icon: '99_938.svg' },
   { label: 'Transfers', value: '$1,100', percent: '15%', tone: 'green', icon: '99_917.svg' },
   { label: 'Gas & Fees', value: '$700', percent: '10%', tone: 'red', icon: '99_969.svg' },
+]
+
+const activityHighlights = [
+  { label: 'Largest Holding', value: 'ETH', detail: '65%', icon: CircleDollarSign, tone: 'violet' },
+  { label: 'Top Protocol', value: 'Uniswap', detail: '$4,200', icon: Layers3, tone: 'pink' },
+  { label: 'Most Active Chain', value: 'Ethereum', detail: '78%', icon: Radio, tone: 'blue' },
+  { label: 'Monthly Transactions', value: '248', detail: 'transactions', icon: ArrowLeftRight, tone: 'green' },
 ]
 
 function SectionLabel({ children, action }) {
@@ -448,34 +459,52 @@ function Activity() {
   const visibleTransactions = showAll ? transactions : transactions.slice(0, 3)
   return (
     <section className="activity">
-      <SectionLabel action={<button type="button" onClick={() => setShowAll((value) => !value)}>{showAll ? 'Show Less' : 'See All'}</button>}>Recent Activity</SectionLabel>
-      <SpendingCard />
-      <div className="transaction-list">
-        {visibleTransactions.map((item) => (
-          <article className={`card transaction transaction--${item.tone}`} tabIndex="0" key={item.title}>
-            <div className="transaction__visual">
-              <span className={`icon-box ${item.tone}`}><Icon name={item.icon} alt="" /></span>
-              <span className={`protocol-logo protocol-logo--${item.tone}`} title={item.protocol}>{item.protocolMark}</span>
-            </div>
-            <div className="transaction__main">
-              <div className="transaction__labels">
-                <span className="transaction__type">{item.type}</span>
-                <span className={`status-chip status-chip--${item.pending ? 'pending' : 'confirmed'}`}>{item.status}</span>
-              </div>
-              <strong>{item.displayTitle}</strong>
-              <div className="transaction__context">
-                <span className="transaction__protocol">{item.protocol}</span>
-                <span aria-hidden="true">•</span>
-                <span className="chain-badge">{item.chain}</span>
+      <div className="activity-layout">
+        <div className="card activity-feed">
+          <div className="activity-card__heading">
+            <div><span>Wallet timeline</span><h2>Recent Activity</h2></div>
+            <button type="button" onClick={() => setShowAll((value) => !value)}>{showAll ? 'Show Less' : 'See All'}</button>
+          </div>
+          <div className="transaction-list">
+            {visibleTransactions.map((item) => (
+              <article className={`transaction transaction--${item.tone}`} tabIndex="0" key={item.title}>
+                <div className="transaction__visual">
+                  <span className={`icon-box ${item.tone}`}><Icon name={item.icon} alt="" /></span>
+                  <span className={`protocol-logo protocol-logo--${item.tone}`} title={item.protocol}>{item.protocolMark}</span>
+                </div>
+                <div className="transaction__main">
+                  <strong>{item.displayTitle}</strong>
+                  <div className="transaction__context">
+                    <span className="transaction__protocol">{item.protocol}</span>
+                    <span aria-hidden="true">•</span>
+                    <span className="chain-badge">{item.chain}</span>
+                  </div>
+                </div>
+                <div className="transaction__amount">
+                  <strong className={item.positive ? 'positive' : ''}>{item.amount}</strong>
+                  <span>{item.crypto}</span>
+                </div>
                 <span className="transaction__time">{item.meta}</span>
-              </div>
-            </div>
-            <div className="transaction__amount">
-              <strong className={item.positive ? 'positive' : ''}>{item.amount}</strong>
-              <span>{item.crypto}</span>
-            </div>
-          </article>
-        ))}
+              </article>
+            ))}
+          </div>
+        </div>
+        <aside className="card highlights-card">
+          <div className="activity-card__heading">
+            <div><span>Wallet intelligence</span><h2>Key Highlights</h2></div>
+          </div>
+          <div className="highlights-list">
+            {activityHighlights.map((highlight) => (
+              <article className={`highlight-item highlight-item--${highlight.tone}`} key={highlight.label}>
+                <span className="highlight-item__icon"><highlight.icon aria-hidden="true" /></span>
+                <div>
+                  <span>{highlight.label}</span>
+                  <strong>{highlight.value} <small>• {highlight.detail}</small></strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        </aside>
       </div>
     </section>
   )
