@@ -1,6 +1,21 @@
 import { useState } from 'react'
 import { Icon as IconifyIcon } from '@iconify/react'
-import { Bell, ChevronDown, Moon, Search } from 'lucide-react'
+import {
+  Activity as ActivityIcon,
+  Bell,
+  ChevronDown,
+  Gem,
+  Images,
+  Landmark,
+  Moon,
+  Network,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Trophy,
+  WalletCards,
+} from 'lucide-react'
 import calendar3d from '@iconify-icons/fluent-emoji/calendar'
 import checkMark3d from '@iconify-icons/fluent-emoji/check-mark-button'
 import crystalBall3d from '@iconify-icons/fluent-emoji/crystal-ball'
@@ -86,8 +101,10 @@ const aiInsights = [
 ]
 
 const balanceStats = [
-  { label: 'Available', value: '12,500', suffix: 'USD' },
-  { label: 'Locked', value: '0', suffix: 'USD' },
+  { label: 'Wallet Rank', value: 'Top 10%', icon: Trophy },
+  { label: 'Activity', value: 'High', icon: ActivityIcon },
+  { label: 'Risk', value: 'Low', icon: ShieldCheck },
+  { label: 'Networks', value: '5', icon: Network },
 ]
 
 const flowCategories = [
@@ -255,6 +272,8 @@ function AIInsights() {
 function BalanceCard() {
   return (
     <section className="balance-card">
+      <span className="balance-card__glass" aria-hidden="true" />
+      <span className="balance-rank-chip"><Trophy aria-hidden="true" /> Top 10%</span>
       <svg
         className="balance-sparkline"
         viewBox="0 0 600 220"
@@ -284,31 +303,14 @@ function BalanceCard() {
       <div className="balance-card__main">
         <span className="eyebrow eyebrow--light">Total net worth</span>
         <h2>$12,500</h2>
-        <span className="growth-pill"><Icon name="99_584.svg" alt="" size="sm" />+12.4% this month</span>
-      </div>
-      <div className="balance-intelligence">
-        <div className="intelligence-metric">
-          <span>Wallet Rank</span>
-          <strong>Top 10%</strong>
-        </div>
-        <div className="intelligence-metric">
-          <span>Monthly Growth</span>
-          <strong className="positive">+$2,100</strong>
-        </div>
-        <div className="intelligence-metric">
-          <span>Status</span>
-          <strong className="status-healthy">Healthy</strong>
-        </div>
-        <div className="intelligence-metric">
-          <span>Activity</span>
-          <strong>High</strong>
-        </div>
+        <span className="growth-pill"><TrendingUp aria-hidden="true" />+12.4% this month</span>
       </div>
       <div className="balance-stats">
         {balanceStats.map((stat) => (
           <div className="balance-stat" key={stat.label}>
+            <span className="balance-stat__icon"><stat.icon aria-hidden="true" /></span>
             <span>{stat.label}</span>
-            <strong>{stat.value} {stat.suffix && <small>{stat.suffix}</small>}</strong>
+            <strong>{stat.value}</strong>
           </div>
         ))}
       </div>
@@ -319,41 +321,41 @@ function BalanceCard() {
 function PortfolioCard() {
   return (
     <section className="card portfolio-card">
-      <div className="card-heading card-heading--start">
-        <div>
-          <h2>Portfolio Snapshot</h2>
-          <span className="rank"><i /> Wallet rank: top 1%</span>
-        </div>
-        <button className="plain-button" type="button" aria-label="Portfolio options">
-          <Icon name="99_627.svg" alt="" />
-        </button>
+      <div className="portfolio-card__heading">
+        <div><span>Wallet intelligence</span><h2>Portfolio Snapshot</h2></div>
+        <span className="portfolio-status"><i /> Excellent</span>
       </div>
       <div className="portfolio-grid">
-        <div className="portfolio-group">
-          <div className="portfolio-metric portfolio-metric--primary">
-            <span>NFT portfolio value</span>
-            <strong className="portfolio-value">8.4 ETH <small>≈ $21,500</small></strong>
-          </div>
-          <div className="portfolio-metric">
-            <span>NFT count</span>
-            <strong>42 Items</strong>
-          </div>
-        </div>
-        <div className="portfolio-group">
-          <div className="portfolio-metric">
-            <span>DeFi stake</span>
-            <strong>$500</strong>
-          </div>
-          <div className="portfolio-metric">
-            <span>Top collection</span>
-            <strong className="collection"><Icon name="99_656.svg" alt="" size="sm" />Bored Ape Yacht Club</strong>
-          </div>
-        </div>
+        <article className="portfolio-metric portfolio-metric--primary">
+          <span className="portfolio-metric__icon"><WalletCards aria-hidden="true" /></span>
+          <span>Portfolio Value</span>
+          <strong>8.4 ETH</strong>
+          <small>≈ $21,500</small>
+        </article>
+        <article className="portfolio-metric">
+          <span className="portfolio-metric__icon"><Images aria-hidden="true" /></span>
+          <span>NFT Count</span>
+          <strong>42</strong>
+          <small>Items collected</small>
+        </article>
+        <article className="portfolio-metric">
+          <span className="portfolio-metric__icon"><Landmark aria-hidden="true" /></span>
+          <span>DeFi Stake</span>
+          <strong>$500</strong>
+          <small>Currently staked</small>
+        </article>
+        <article className="portfolio-metric">
+          <span className="portfolio-metric__icon"><Gem aria-hidden="true" /></span>
+          <span>Collection</span>
+          <strong>BAYC</strong>
+          <small>Bored Ape Yacht Club</small>
+        </article>
       </div>
       <div className="score-bar">
-        <div className="score-bar__copy"><span>Portfolio score</span><strong>Excellent</strong></div>
-        <div className="score-bar__meter" aria-hidden="true"><i /></div>
+        <span className="score-bar__icon"><Sparkles aria-hidden="true" /></span>
+        <div className="score-bar__copy"><span>Portfolio Score</span><strong>Excellent</strong></div>
         <strong className="score-bar__value">92<small>/100</small></strong>
+        <div className="score-bar__meter" aria-hidden="true"><i /></div>
       </div>
     </section>
   )
