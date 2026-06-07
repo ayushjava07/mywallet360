@@ -28,7 +28,7 @@ export function Summary({ flow }) {
     <section className="summary">
       <SectionLabel>Summary</SectionLabel>
       <div className="summary__heading">
-        <div><h2>This Month</h2><span>Wallet Money Flow Report</span></div>
+        <div><h2>Last 30 Days</h2><span>Wallet Money Flow Report</span></div>
         <span>Where did my money go?</span>
       </div>
       <div className="flow-grid">

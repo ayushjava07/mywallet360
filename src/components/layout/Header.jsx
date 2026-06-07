@@ -1,15 +1,15 @@
 import { useEffect, useRef } from 'react'
-import { Bell, ChevronDown, Moon, Search, Sun } from 'lucide-react'
-import { asset } from '../../utils/assets'
+import { Bell, ChevronDown, Moon, Search, Sun, WalletCards } from 'lucide-react'
 
 export function Header({
   wallet,
-  selectedWalletId,
   searchValue,
   onSearchChange,
-  onSelectWallet,
+  onSearchSubmit,
+  searchError,
+  onSelectExampleWallet,
   isLoading,
-  demoWallets,
+  exampleWallets,
   theme,
   onToggleTheme,
 }) {
@@ -37,44 +37,44 @@ export function Header({
     <header className="header">
       <div className="profile header__profile">
         <div className="profile__image-wrap">
-          <img
-            className="profile__image"
-            src={asset(wallet.profile.avatar)}
-            alt={`${wallet.profile.name} profile`}
-          />
-          <span className="profile__status" aria-label="Online" />
+          <span className="profile__placeholder"><WalletCards aria-hidden="true" /></span>
+          {wallet && <span className="profile__status" aria-label="Wallet loaded" />}
         </div>
         <div>
-          <span className="eyebrow">Welcome back,</span>
-          <h1>{wallet.profile.name}</h1>
+          <span className="eyebrow">{wallet ? 'Analyzing wallet' : 'Welcome to'}</span>
+          <h1>{wallet ? wallet.profile.name : 'MyWallet360'}</h1>
         </div>
       </div>
 
       <div className="wallet-search-area">
-        <label className="global-search">
+        <form className="global-search" onSubmit={(event) => {
+          event.preventDefault()
+          onSearchSubmit()
+        }}>
           <Search aria-hidden="true" />
           <input
             ref={searchInputRef}
             value={searchValue}
             onChange={(event) => onSearchChange(event.target.value)}
             type="search"
-            placeholder="Search wallet, token, ENS, transaction..."
-            aria-label="Global search"
+            placeholder="Enter Ethereum wallet address..."
+            aria-label="Ethereum wallet address"
           />
-          <kbd><span>Ctrl</span><span>K</span></kbd>
-        </label>
-        <div className="demo-wallets">
-          <span>Try Demo Wallets</span>
+          <button disabled={isLoading} type="submit">Analyze</button>
+        </form>
+        {searchError && <span className="wallet-search-error" role="alert">{searchError}</span>}
+        <div className="example-wallets">
+          <span>Example Wallets</span>
           <div>
-            {demoWallets.map((demoWallet) => (
+            {exampleWallets.map((exampleWallet) => (
               <button
-                className={selectedWalletId === demoWallet.id ? 'active' : ''}
+                className={wallet?.id === exampleWallet.address ? 'active' : ''}
                 disabled={isLoading}
                 type="button"
-                onClick={() => onSelectWallet(demoWallet.id)}
-                key={demoWallet.id}
+                onClick={() => onSelectExampleWallet(exampleWallet.address)}
+                key={exampleWallet.address}
               >
-                {demoWallet.chipLabel}
+                {exampleWallet.label}
               </button>
             ))}
           </div>
@@ -95,11 +95,11 @@ export function Header({
         >
           {theme === 'dark' ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
         </button>
-        <button className="wallet-pill" type="button" aria-label={`Connected wallet ${wallet.profile.wallet}`}>
+        <button className="wallet-pill" type="button" aria-label={wallet ? `Connected wallet ${wallet.profile.wallet}` : 'No wallet loaded'}>
           <span className="wallet-pill__dot" />
           <span className="wallet-pill__copy">
-            <strong>Connected</strong>
-            <small>{wallet.profile.wallet}</small>
+            <strong>{wallet ? 'Connected' : 'No wallet'}</strong>
+            <small>{wallet ? wallet.profile.wallet : 'Enter address'}</small>
           </span>
           <ChevronDown aria-hidden="true" />
         </button>

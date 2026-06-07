@@ -13,16 +13,17 @@ import { useTheme } from './hooks/useTheme'
 import { useWalletDashboard } from './hooks/useWalletDashboard'
 import { walletService } from './services/walletService'
 
-const demoWallets = walletService.listDemoWallets()
+const exampleWallets = walletService.listExampleWallets()
 
 export default function App() {
   const {
     wallet,
-    selectedWalletId,
+    error,
     searchValue,
     isLoading,
     setSearchValue,
-    selectWallet,
+    searchWallet,
+    selectExampleWallet,
   } = useWalletDashboard()
   const { theme, toggleTheme } = useTheme()
 
@@ -30,31 +31,42 @@ export default function App() {
     <div className="app-shell">
       <Header
         wallet={wallet}
-        selectedWalletId={selectedWalletId}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
-        onSelectWallet={selectWallet}
+        onSearchSubmit={searchWallet}
+        searchError={error}
+        onSelectExampleWallet={selectExampleWallet}
         isLoading={isLoading}
-        demoWallets={demoWallets}
+        exampleWallets={exampleWallets}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
 
-      <main className={isLoading ? 'dashboard-loading' : 'dashboard-ready'} key={wallet.id}>
-        {isLoading && <DashboardLoader />}
-        <div className="dashboard-grid dashboard-grid--top">
-          <BalanceCard balance={wallet.balance} />
-          <PortfolioCard portfolio={wallet.portfolio} />
-          <IdentityCard stats={wallet.identity} />
-          <WalletPersonality personality={wallet.personality} />
-        </div>
-        <AIInsights ai={wallet.ai} />
-        <Summary flow={wallet.flow} />
-        <Activity transactions={wallet.transactions} highlights={wallet.highlights} />
-        <Insights insights={wallet.insights} />
-      </main>
-
-      <BottomNav />
+      {wallet ? (
+        <>
+          <main className={isLoading ? 'dashboard-loading' : 'dashboard-ready'} key={wallet.id}>
+            {isLoading && <DashboardLoader />}
+            <div className="dashboard-grid dashboard-grid--top">
+              <BalanceCard balance={wallet.balance} />
+              <PortfolioCard portfolio={wallet.portfolio} />
+              <IdentityCard stats={wallet.identity} />
+              <WalletPersonality personality={wallet.personality} />
+            </div>
+            <AIInsights ai={wallet.ai} />
+            <Summary flow={wallet.flow} />
+            <Activity transactions={wallet.transactions} highlights={wallet.highlights} />
+            <Insights insights={wallet.insights} />
+          </main>
+          <BottomNav />
+        </>
+      ) : (
+        <main className="wallet-empty-state">
+          {isLoading && <DashboardLoader />}
+          <span>Wallet analytics</span>
+          <h2>Enter a wallet address to begin</h2>
+          <p>No wallet data is loaded by default. Search an Ethereum address or choose an example wallet above.</p>
+        </main>
+      )}
     </div>
   )
 }

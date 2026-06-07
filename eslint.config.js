@@ -27,4 +27,10 @@ export default [
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z]' }],
     },
   },
+  {
+    files: ['backend/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ]

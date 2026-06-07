@@ -1,33 +1,42 @@
 import { useState } from 'react'
 import { walletService } from '../services/walletService'
 
-const defaultWalletId = walletService.getDefaultWalletId()
-
 export function useWalletDashboard() {
-  const [selectedWalletId, setSelectedWalletId] = useState(defaultWalletId)
-  const [wallet, setWallet] = useState(walletService.getWalletSnapshot(defaultWalletId))
+  const [wallet, setWallet] = useState(null)
   const [searchValue, setSearchValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const selectWallet = async (walletId) => {
-    if (isLoading || walletId === selectedWalletId) return
+  const analyzeWallet = async (address) => {
+    if (isLoading) return
 
     setIsLoading(true)
-    setSearchValue(walletService.getWalletSnapshot(walletId).chipLabel)
+    setError('')
 
-    const nextWallet = await walletService.getWallet(walletId)
+    try {
+      const nextWallet = await walletService.getWalletByAddress(address)
+      setWallet(nextWallet)
+      setSearchValue(nextWallet.id)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-    setSelectedWalletId(walletId)
-    setWallet(nextWallet)
-    setIsLoading(false)
+  const searchWallet = () => analyzeWallet(searchValue)
+  const selectExampleWallet = (address) => {
+    setSearchValue(address)
+    analyzeWallet(address)
   }
 
   return {
+    error,
     wallet,
-    selectedWalletId,
     searchValue,
     isLoading,
     setSearchValue,
-    selectWallet,
+    searchWallet,
+    selectExampleWallet,
   }
 }

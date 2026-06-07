@@ -1,4 +1,4 @@
-import { getWalletData } from "../services/moralis.service.js";
+import { getWalletData } from "../services/etherscan.service.js";
 
 export const getWalletProfile = async (req, res) => {
   try {
