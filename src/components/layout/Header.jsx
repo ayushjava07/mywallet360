@@ -100,12 +100,14 @@ export function Header({
     <header className="header">
       <div className="profile header__profile">
         <div className="profile__image-wrap">
-          <span className="profile__placeholder"><WalletCards aria-hidden="true" /></span>
+          <span className="profile__placeholder profile__placeholder--brand">
+            <img src="/images/Vector.svg" alt="MyWallet360 logo" />
+          </span>
           {wallet && <span className="profile__status" aria-label="Wallet loaded" />}
         </div>
-        <div>
-          <span className="eyebrow">{wallet ? 'Analyzing wallet' : 'Welcome to'}</span>
-          <h1>{wallet ? wallet.profile.name : 'MyWallet360'}</h1>
+        <div className="profile__brand-copy">
+          <h1>MyWallet360</h1>
+          <span className="profile__tagline">Understands every txn.</span>
         </div>
       </div>
 

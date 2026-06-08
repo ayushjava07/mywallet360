@@ -111,7 +111,11 @@ h1, h2, h3 { color: var(--ink); font-weight: 800; letter-spacing: -.035em; }
 .profile__image { @apply block size-12 rounded-full border-2 object-cover; border-color: rgba(255,255,255,.95); box-shadow: 0 4px 14px rgba(15,23,42,.1); }
 .profile__placeholder { @apply grid size-12 place-items-center rounded-full border-2; border-color: rgba(255,255,255,.95); color: var(--accent); background: linear-gradient(145deg, #edf9f8, #fff); box-shadow: 0 4px 14px rgba(15,23,42,.1); }
 .profile__placeholder svg { width: 23px; height: 23px; }
+.profile__placeholder--brand { overflow: hidden; border-radius: 15px; background: #030712; }
+.profile__placeholder--brand img { width: 76px; max-width: none; height: 51px; object-fit: cover; object-position: center; transform: translateY(10px) scale(1.42); }
 .profile__status { position: absolute; right: -1px; bottom: -1px; width: 14px; height: 14px; border: 3px solid #fff; border-radius: 50%; background: #14b8a6; box-shadow: 0 0 0 2px rgba(20,184,166,.12); }
+.profile__brand-copy { display: grid; min-width: 0; gap: 4px; }
+.profile__tagline { overflow: hidden; color: var(--muted); font-size: 9px; font-weight: 650; letter-spacing: .01em; text-overflow: ellipsis; white-space: nowrap; }
 .eyebrow { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; }
 .section-label { color: var(--ink); font-size: 14px; font-weight: 750; letter-spacing: -.02em; }
 .header .eyebrow { color: #6b7280; font-size: 10px; font-weight: 650; text-transform: none; letter-spacing: .01em; }
@@ -666,6 +670,8 @@ html[data-theme="dark"] .bottom-nav button.active > span { box-shadow: 0 0 22px 
   .profile { @apply gap-[9px]; }
   .profile h1 { font-size: 15px; }
   .profile__image { width: 42px; height: 42px; }
+  .profile__placeholder--brand { width: 42px; height: 42px; }
+  .profile__tagline { font-size: 8px; }
   .icon-button { @apply size-10; }
   .header__actions { @apply gap-[5px]; }
   .notification-panel { position: fixed; top: 78px; right: 12px; left: 12px; width: auto; }
