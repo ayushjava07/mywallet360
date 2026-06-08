@@ -104,7 +104,7 @@ h1, h2, h3 { color: var(--ink); font-weight: 800; letter-spacing: -.035em; }
 .accent-text { color: var(--teal); }
 
 .header { position: relative; z-index: 100; min-height: 102px; margin: 18px 0 30px; padding: 14px 16px; display: grid; grid-template-columns: minmax(200px, 1fr) minmax(340px, 460px) minmax(290px, 1fr); align-items: center; gap: 20px; border: 1px solid rgba(255,255,255,.5); border-radius: 20px; background: rgba(255,255,255,.75); box-shadow: 0 8px 32px rgba(15,23,42,.06); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-.profile { @apply flex items-center gap-[13px]; }
+.profile { @apply flex items-center gap-8; }
 .header__profile { @apply min-w-0; width: fit-content; align-self: center; justify-self: center; }
 .profile h1 { margin-top: 3px; overflow: hidden; color: #111827; font-size: 20px; line-height: 1.1; letter-spacing: -.04em; text-overflow: ellipsis; white-space: nowrap; }
 .profile__image-wrap { @apply relative; }
@@ -707,7 +707,7 @@ html[data-theme="dark"] .bottom-nav button.active > span { box-shadow: 0 0 22px 
 @media (max-width: 480px) {
   .app-shell { @apply px-3 pb-[116px]; }
   .header { @apply grid-cols-[minmax(0,1fr)_auto] rounded-[18px]; }
-  .profile { @apply gap-[9px]; }
+  .profile { @apply gap-5; }
   .profile h1, .profile__brand-copy h1 { font-size: 18px; }
   .profile__image { width: 42px; height: 42px; }
   .brand-mark { width: 52px; height: 52px; border-radius: 13px; }
