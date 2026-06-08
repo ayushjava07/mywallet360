@@ -14,10 +14,18 @@ export function Header({
   exampleWallets,
   theme,
   onToggleTheme,
+  connectedAddress,
+  walletProviders,
+  isConnecting,
+  connectionError,
+  onConnectWallet,
+  onDisconnectWallet,
 }) {
   const searchInputRef = useRef(null)
   const notificationRef = useRef(null)
+  const walletControlRef = useRef(null)
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false)
+  const [isWalletPanelOpen, setIsWalletPanelOpen] = useState(false)
   const [notificationPermission, setNotificationPermission] = useState(() => (
     'Notification' in window ? Notification.permission : 'unsupported'
   ))
@@ -37,12 +45,17 @@ export function Header({
 
       if (event.key === 'Escape') {
         setIsNotificationPanelOpen(false)
+        setIsWalletPanelOpen(false)
       }
     }
 
     const handleOutsideClick = (event) => {
       if (!notificationRef.current?.contains(event.target)) {
         setIsNotificationPanelOpen(false)
+      }
+
+      if (!walletControlRef.current?.contains(event.target)) {
+        setIsWalletPanelOpen(false)
       }
     }
 
@@ -95,6 +108,9 @@ export function Header({
       description: 'This browser does not support desktop notifications.',
     },
   }[notificationPermission]
+  const hasMetaMask = walletProviders.some((walletProvider) => (
+    walletProvider.provider.isMetaMask || walletProvider.rdns.includes('metamask')
+  ))
 
   return (
     <header className="header">
@@ -224,14 +240,99 @@ export function Header({
         >
           {theme === 'dark' ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
         </button>
-        <button className="wallet-pill" type="button" aria-label={wallet ? `Connected wallet ${wallet.profile.wallet}` : 'No wallet loaded'}>
-          <span className="wallet-pill__dot" />
-          <span className="wallet-pill__copy">
-            <strong>{wallet ? 'Connected' : 'No wallet'}</strong>
-            <small>{wallet ? wallet.profile.wallet : 'Enter address'}</small>
-          </span>
-          <ChevronDown aria-hidden="true" />
-        </button>
+        <div className="wallet-control" ref={walletControlRef}>
+          <button
+            className={`wallet-pill${connectedAddress ? ' connected' : ''}`}
+            type="button"
+            aria-label={connectedAddress ? `Connected wallet ${connectedAddress}` : 'Connect wallet'}
+            aria-expanded={isWalletPanelOpen}
+            aria-controls="wallet-connection-panel"
+            onClick={() => setIsWalletPanelOpen((value) => !value)}
+          >
+            <span className="wallet-pill__dot" />
+            <span className="wallet-pill__copy">
+              <strong>{connectedAddress ? 'Connected wallet' : 'Connect wallet'}</strong>
+              <small>{connectedAddress ? compactAddress(connectedAddress) : 'MetaMask or browser wallet'}</small>
+            </span>
+            <ChevronDown aria-hidden="true" />
+          </button>
+          {isWalletPanelOpen && (
+            <aside
+              className="wallet-connect-panel"
+              id="wallet-connection-panel"
+              role="dialog"
+              aria-labelledby="wallet-connect-title"
+            >
+              <div className="wallet-connect-panel__heading">
+                <span><WalletCards aria-hidden="true" /></span>
+                <div>
+                  <strong id="wallet-connect-title">
+                    {connectedAddress ? 'Wallet connected' : 'Connect your wallet'}
+                  </strong>
+                  <p>
+                    {connectedAddress
+                      ? 'This account is connected and its analytics are loaded.'
+                      : 'Choose a browser wallet. You will approve the connection inside your wallet.'}
+                  </p>
+                </div>
+              </div>
+
+              {connectedAddress ? (
+                <div className="connected-wallet-card">
+                  <span className="connected-wallet-card__dot" />
+                  <div>
+                    <strong>{compactAddress(connectedAddress)}</strong>
+                    <small>Connected account</small>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDisconnectWallet()
+                      setIsWalletPanelOpen(false)
+                    }}
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              ) : (
+                <div className="wallet-provider-list">
+                  {walletProviders.map((walletProvider) => (
+                    <button
+                      type="button"
+                      disabled={isConnecting}
+                      onClick={() => onConnectWallet(walletProvider)}
+                      key={`${walletProvider.rdns}-${walletProvider.name}`}
+                    >
+                      <span className="wallet-provider-icon">
+                        {walletProvider.icon
+                          ? <img src={walletProvider.icon} alt="" />
+                          : <WalletCards aria-hidden="true" />}
+                      </span>
+                      <span>
+                        <strong>{walletProvider.name}</strong>
+                        <small>{isConnecting ? 'Waiting for approval...' : 'Connect browser wallet'}</small>
+                      </span>
+                      <ChevronDown aria-hidden="true" />
+                    </button>
+                  ))}
+
+                  {!hasMetaMask && (
+                    <a href="https://metamask.io/download/" target="_blank" rel="noreferrer">
+                      <span className="wallet-provider-icon wallet-provider-icon--metamask">M</span>
+                      <span><strong>MetaMask</strong><small>Install MetaMask to connect</small></span>
+                      <ChevronDown aria-hidden="true" />
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {connectionError && <p className="wallet-connect-error" role="alert">{connectionError}</p>}
+              <small className="wallet-connect-panel__note">
+                MyWallet360 only requests your public address. It cannot access your funds.
+              </small>
+            </aside>
+          )}
+        </div>
       </div>
     </header>
   )

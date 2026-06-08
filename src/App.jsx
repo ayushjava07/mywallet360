@@ -24,6 +24,12 @@ export default function App() {
     setSearchValue,
     searchWallet,
     selectExampleWallet,
+    connectedAddress,
+    walletProviders,
+    isConnecting,
+    connectionError,
+    connectWallet,
+    disconnectWallet,
   } = useWalletDashboard()
   const { theme, toggleTheme } = useTheme()
 
@@ -40,6 +46,12 @@ export default function App() {
         exampleWallets={exampleWallets}
         theme={theme}
         onToggleTheme={toggleTheme}
+        connectedAddress={connectedAddress}
+        walletProviders={walletProviders}
+        isConnecting={isConnecting}
+        connectionError={connectionError}
+        onConnectWallet={connectWallet}
+        onDisconnectWallet={disconnectWallet}
       />
 
       {wallet ? (
