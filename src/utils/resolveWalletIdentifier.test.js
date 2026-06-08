@@ -10,8 +10,7 @@ const ADDRESS = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
 test('classifies supported wallet identifiers', () => {
   assert.equal(getWalletIdentifierType(ADDRESS), 'address')
   assert.equal(getWalletIdentifierType('vitalik.eth'), 'ens')
-  assert.equal(getWalletIdentifierType('brad.crypto'), 'unstoppable')
-  assert.equal(getWalletIdentifierType('username.wallet'), 'unstoppable')
+  assert.equal(getWalletIdentifierType('brad.crypto'), null)
   assert.equal(getWalletIdentifierType('not a wallet'), null)
 })
 
@@ -50,10 +49,10 @@ test('resolves a domain and preserves the original input', async () => {
   }
 })
 
-test('shows the server user-friendly resolution error', async () => {
+test('shows the server user-friendly ENS resolution error', async () => {
   const originalFetch = globalThis.fetch
   globalThis.fetch = async () => new Response(JSON.stringify({
-    message: 'That Unstoppable Domain does not have an Ethereum address.',
+    message: 'That ENS name was not found or has no Ethereum address.',
   }), {
     status: 404,
     headers: { 'Content-Type': 'application/json' },
@@ -61,11 +60,10 @@ test('shows the server user-friendly resolution error', async () => {
 
   try {
     await assert.rejects(
-      resolveWalletIdentifier('missing.crypto'),
-      /does not have an Ethereum address/,
+      resolveWalletIdentifier('missing.eth'),
+      /ENS name was not found/,
     )
   } finally {
     globalThis.fetch = originalFetch
   }
 })
-

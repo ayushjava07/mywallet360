@@ -79,8 +79,8 @@ export default function App() {
         <main className="wallet-empty-state">
           {isLoading && <DashboardLoader />}
           <span>Wallet analytics</span>
-          <h2>Enter a wallet address or domain to begin</h2>
-          <p>Search an Ethereum address, ENS name, or Unstoppable Domain to load its on-chain analytics.</p>
+          <h2>Enter a wallet address or ENS name</h2>
+          <p>Search an Ethereum address or .eth name to load its on-chain analytics.</p>
         </main>
       )}
     </div>

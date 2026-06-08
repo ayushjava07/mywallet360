@@ -114,11 +114,6 @@ export function Header({
     walletProvider.provider.isMetaMask || walletProvider.rdns.includes('metamask')
   ))
   const isSearchBusy = isLoading || isResolving
-  const identifierTypeLabel = {
-    address: 'Address',
-    ens: 'ENS',
-    unstoppable: 'Unstoppable',
-  }[resolvedIdentifier?.type]
 
   return (
     <header className="header">
@@ -143,17 +138,17 @@ export function Header({
             value={searchValue}
             onChange={(event) => onSearchChange(event.target.value)}
             type="search"
-            placeholder="Enter address, ENS, or Unstoppable Domain..."
-            aria-label="Ethereum wallet address or domain"
+            placeholder="Enter Ethereum address or ENS name..."
+            aria-label="Ethereum wallet address or ENS name"
           />
           <button disabled={isSearchBusy} type="submit">
             {isResolving ? 'Resolving...' : isLoading ? 'Analyzing...' : 'Analyze'}
           </button>
         </form>
         {searchError && <span className="wallet-search-error" role="alert">{searchError}</span>}
-        {resolvedIdentifier && !searchError && (
+        {resolvedIdentifier?.type === 'ens' && !searchError && (
           <div className="wallet-resolution" aria-live="polite">
-            <span>{identifierTypeLabel}</span>
+            <span>ENS</span>
             <strong title={resolvedIdentifier.originalInput}>{resolvedIdentifier.originalInput}</strong>
             <span aria-hidden="true">resolves to</span>
             <code title={resolvedIdentifier.address}>{compactAddress(resolvedIdentifier.address)}</code>

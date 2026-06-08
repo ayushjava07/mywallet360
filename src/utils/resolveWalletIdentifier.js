@@ -1,24 +1,5 @@
 const API_BASE_URL = import.meta.env?.VITE_API_URL || ''
 const ETHEREUM_ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
-const UNSTOPPABLE_TLDS = new Set([
-  '888',
-  'anime',
-  'binanceus',
-  'bitcoin',
-  'blockchain',
-  'crypto',
-  'dao',
-  'go',
-  'hi',
-  'klever',
-  'kresus',
-  'manga',
-  'nft',
-  'polygon',
-  'wallet',
-  'x',
-  'zil',
-])
 
 export const getWalletIdentifierType = (input) => {
   const normalizedInput = input.trim().toLowerCase()
@@ -28,7 +9,6 @@ export const getWalletIdentifierType = (input) => {
   const tld = normalizedInput.split('.').pop()
 
   if (tld === 'eth') return 'ens'
-  if (UNSTOPPABLE_TLDS.has(tld)) return 'unstoppable'
 
   return null
 }
@@ -38,7 +18,7 @@ export const resolveWalletIdentifier = async (input) => {
   const type = getWalletIdentifierType(originalInput)
 
   if (!originalInput || !type) {
-    throw new Error('Enter a valid Ethereum address, ENS name, or Unstoppable Domain.')
+    throw new Error('Enter a valid Ethereum address or ENS name.')
   }
 
   if (type === 'address') {
@@ -60,7 +40,11 @@ export const resolveWalletIdentifier = async (input) => {
   const result = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    throw new Error(result.message || 'We could not resolve that domain. Check the name and try again.')
+    throw new Error(result.message || (
+      response.status === 404
+        ? 'ENS search is unavailable on the current backend. Restart or deploy the latest backend.'
+        : 'We could not resolve that ENS name right now. Please try again.'
+    ))
   }
 
   if (!ETHEREUM_ADDRESS_PATTERN.test(result.address)) {
