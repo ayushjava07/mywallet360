@@ -25,7 +25,7 @@ function FlowCard({ direction, data }) {
 
 export function Summary({ flow }) {
   return (
-    <section id="dashboard-money-flow" className="summary">
+    <section className="summary">
       <SectionLabel>Summary</SectionLabel>
       <div className="summary__heading">
         <div><h2>Last 30 Days</h2><span>Wallet Money Flow Report</span></div>

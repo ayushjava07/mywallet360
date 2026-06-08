@@ -44,7 +44,7 @@ export default function App() {
 
       {wallet ? (
         <>
-          <main id="dashboard-overview" className={isLoading ? 'dashboard-loading' : 'dashboard-ready'} key={wallet.id}>
+          <main className={isLoading ? 'dashboard-loading' : 'dashboard-ready'} key={wallet.id}>
             {isLoading && <DashboardLoader />}
             <div className="dashboard-grid dashboard-grid--top">
               <BalanceCard balance={wallet.balance} />

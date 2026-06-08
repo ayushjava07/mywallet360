@@ -87,7 +87,7 @@ export function Header({
       </div>
 
       <div className="header__actions">
-        <button className="icon-button" type="button" aria-label="View notifications" title="Notifications">
+        <button className="icon-button" type="button" aria-label="View notifications">
           <Bell aria-hidden="true" />
           <span className="notification-dot" />
         </button>
@@ -97,7 +97,6 @@ export function Header({
           aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           aria-pressed={theme === 'dark'}
           onClick={onToggleTheme}
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
         >
           {theme === 'dark' ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
         </button>

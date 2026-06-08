@@ -3,7 +3,7 @@ import { portfolioIcons } from '../../config/dashboard'
 
 export function PortfolioCard({ portfolio }) {
   return (
-    <section id="dashboard-portfolio" className="card portfolio-card">
+    <section className="card portfolio-card">
       <div className="portfolio-card__heading">
         <div><span>Wallet intelligence</span><h2>Portfolio Snapshot</h2></div>
         <span className="portfolio-status"><i /> {portfolio.status}</span>

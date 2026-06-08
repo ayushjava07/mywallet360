@@ -20,10 +20,10 @@ import shield3d from '@iconify-icons/fluent-emoji/shield'
 import trophy3d from '@iconify-icons/fluent-emoji/trophy'
 
 export const navItems = [
-  { label: 'Overview', icon: '99_1001.svg', target: 'dashboard-overview' },
-  { label: 'Money Flow', icon: '99_1008.svg', target: 'dashboard-money-flow' },
-  { label: 'Portfolio', icon: '99_1015.svg', target: 'dashboard-portfolio' },
-  { label: 'Insights', icon: '99_1022.svg', target: 'dashboard-insights' },
+  { label: 'Overview', icon: '99_1001.svg' },
+  { label: 'Money Flow', icon: '99_1008.svg' },
+  { label: 'Portfolio', icon: '99_1015.svg' },
+  { label: 'Insights', icon: '99_1022.svg' },
 ]
 
 export const metricIcons = {
