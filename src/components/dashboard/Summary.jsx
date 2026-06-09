@@ -43,7 +43,7 @@ export function Summary({ flow }) {
         </div>
         <div className="category-grid grid grid-cols-4 gap-2.5 max-[899px]:grid-cols-2 max-[480px]:grid-cols-1">
           {flow.categories.map((category) => (
-            <MetricExplainer className={`card category-card category-card--${category.tone} relative grid min-h-[102px] gap-[11px] overflow-hidden rounded-[18px] border-0 p-[14px] max-[700px]:gap-3.5 max-[700px]:p-[13px] max-[480px]:min-h-[78px]`} explanation={category.explanation} key={category.label}>
+            <article className={`card category-card category-card--${category.tone} relative grid min-h-[102px] gap-[11px] overflow-hidden rounded-[18px] border-0 p-[14px] max-[700px]:gap-3.5 max-[700px]:p-[13px] max-[480px]:min-h-[78px]`} key={category.label}>
               <div className="flex items-center justify-start gap-[9px]">
                 <span className={`icon-box icon-box--small ${category.tone}`}>
                   <Icon name={category.icon} alt="" size="sm" />
@@ -54,7 +54,7 @@ export function Summary({ flow }) {
               <div className="category-progress" aria-hidden="true">
                 <i style={{ width: `${category.percent}%` }} />
               </div>
-            </MetricExplainer>
+            </article>
           ))}
         </div>
       </div>

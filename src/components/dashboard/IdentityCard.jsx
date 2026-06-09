@@ -1,7 +1,6 @@
 import identificationCard3d from '@iconify-icons/fluent-emoji/identification-card'
 import { identityIcons } from '../../config/dashboard'
 import { ThreeDIcon } from '../common/Icon'
-import { MetricExplainer } from '../common/MetricExplainer'
 
 export function IdentityCard({ stats }) {
   return (
@@ -15,14 +14,14 @@ export function IdentityCard({ stats }) {
       </div>
       <div className="identity-grid relative z-[1] mt-[22px] grid grid-cols-2 gap-3 max-[700px]:mt-[18px] max-[700px]:gap-2.5 max-[480px]:grid-cols-1 max-[480px]:gap-[9px]">
         {stats.map((stat) => (
-          <MetricExplainer className={`stat stat--${stat.tone} relative grid min-h-[126px] min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-4 rounded-3xl border-0 p-5 max-[480px]:min-h-28 max-[480px]:p-4`} explanation={stat.explanation} key={stat.label}>
+          <article className={`stat stat--${stat.tone} relative grid min-h-[126px] min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-4 rounded-3xl border-0 p-5 max-[480px]:min-h-28 max-[480px]:p-4`} key={stat.label}>
             <span className="stat__icon stat__icon--3d"><ThreeDIcon icon={identityIcons[stat.icon]} /></span>
             <div className="stat__content grid min-w-0 gap-[5px]">
               <span className="stat__name">{stat.label}</span>
               <strong>{stat.value}</strong>
               <small>{stat.description}</small>
             </div>
-          </MetricExplainer>
+          </article>
         ))}
       </div>
     </section>

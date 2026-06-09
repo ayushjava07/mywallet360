@@ -38,6 +38,8 @@ export function MetricExplainer({
   const toggle = () => isOpen ? close() : open()
 
   useEffect(() => {
+    if (!explanation) return undefined
+
     const closeOther = (event) => {
       if (event.detail !== panelId) close()
     }
@@ -64,17 +66,17 @@ export function MetricExplainer({
       window.removeEventListener('resize', close)
       window.removeEventListener('scroll', closeOnDesktopScroll, true)
     }
-  }, [panelId])
+  }, [explanation, panelId])
 
   useEffect(() => {
-    if (position?.mode !== 'sheet') return undefined
+    if (!explanation || position?.mode !== 'sheet') return undefined
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [position?.mode])
+  }, [explanation, position?.mode])
 
   if (!explanation) return createElement(as, { className, ...props }, children)
 

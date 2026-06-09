@@ -1,7 +1,6 @@
 import crystalBall3d from '@iconify-icons/fluent-emoji/crystal-ball'
 import { aiIcons } from '../../config/dashboard'
 import { ThreeDIcon } from '../common/Icon'
-import { MetricExplainer } from '../common/MetricExplainer'
 
 export function AIInsights({ ai }) {
   return (
@@ -19,16 +18,15 @@ export function AIInsights({ ai }) {
       </div>
       <div className="ai-card__insights grid content-center gap-2.5">
         {ai.insights.map((insight, index) => (
-          <MetricExplainer
+          <article
             className={`ai-insight ai-insight--${insight.tone} flex min-w-0 items-center gap-3 rounded-[15px] border-0 p-[13px]${index === 0 ? ' ai-insight--highlighted p-[15px]' : ''}`}
-            explanation={insight.explanation}
             key={insight.text}
           >
             <span className="ai-insight__icon ai-insight__icon--3d">
               <ThreeDIcon icon={aiIcons[insight.icon]} />
             </span>
             <div><strong>{insight.text}</strong><span>{insight.detail}</span></div>
-          </MetricExplainer>
+          </article>
         ))}
       </div>
     </section>

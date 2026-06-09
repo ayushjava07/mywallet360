@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { highlightIcons } from '../../config/dashboard'
 import { Icon } from '../common/Icon'
-import { MetricExplainer } from '../common/MetricExplainer'
 
 function Transaction({ item }) {
   return (
-    <MetricExplainer className={`transaction transaction--${item.tone} relative grid min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto_minmax(72px,auto)] items-center gap-[11px] rounded-[14px] border-0 bg-transparent p-[13px_11px] max-[1050px]:grid-cols-[auto_minmax(0,1fr)_auto] max-[700px]:grid-cols-[auto_minmax(0,1fr)] max-[480px]:gap-[9px] max-[480px]:p-[9px_7px] max-[360px]:grid-cols-[auto_minmax(0,1fr)]`} explanation={item.explanation}>
+    <article className={`transaction transaction--${item.tone} relative grid min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto_minmax(72px,auto)] items-center gap-[11px] rounded-[14px] border-0 bg-transparent p-[13px_11px] max-[1050px]:grid-cols-[auto_minmax(0,1fr)_auto] max-[700px]:grid-cols-[auto_minmax(0,1fr)] max-[480px]:gap-[9px] max-[480px]:p-[9px_7px] max-[360px]:grid-cols-[auto_minmax(0,1fr)]`} tabIndex="0">
       <div className="transaction__visual">
         <span className={`icon-box ${item.tone}`}><Icon name={item.icon} alt="" /></span>
         <span className={`protocol-logo protocol-logo--${item.tone}`} title={item.protocol}>
@@ -25,7 +24,7 @@ function Transaction({ item }) {
         <span>{item.crypto}</span>
       </div>
       <span className="transaction__time">{item.meta}</span>
-    </MetricExplainer>
+    </article>
   )
 }
 
@@ -33,13 +32,13 @@ function Highlight({ highlight }) {
   const HighlightIcon = highlightIcons[highlight.icon]
 
   return (
-    <MetricExplainer className={`highlight-item highlight-item--${highlight.tone} grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2.5 rounded-[15px] p-[11px]`} explanation={highlight.explanation}>
+    <article className={`highlight-item highlight-item--${highlight.tone} grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2.5 rounded-[15px] p-[11px]`}>
       <span className="highlight-item__icon"><HighlightIcon aria-hidden="true" /></span>
       <div className="grid min-w-0 gap-[3px]">
         <span>{highlight.label}</span>
         <strong>{highlight.value} <small>• {highlight.detail}</small></strong>
       </div>
-    </MetricExplainer>
+    </article>
   )
 }
 
