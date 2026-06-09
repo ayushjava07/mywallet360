@@ -12,7 +12,9 @@ export function MetricExplainer({
   ...props
 }) {
   const panelId = useId()
+  const titleId = useId()
   const triggerRef = useRef(null)
+  const buttonRef = useRef(null)
   const panelRef = useRef(null)
   const [position, setPosition] = useState(null)
   const isOpen = Boolean(position)
@@ -34,7 +36,10 @@ export function MetricExplainer({
     window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: panelId }))
   }
 
-  const close = () => setPosition(null)
+  const close = (restoreFocus = false) => {
+    setPosition(null)
+    if (restoreFocus) requestAnimationFrame(() => buttonRef.current?.focus())
+  }
   const toggle = () => isOpen ? close() : open()
 
   useEffect(() => {
@@ -47,7 +52,7 @@ export function MetricExplainer({
       if (!triggerRef.current?.contains(event.target) && !panelRef.current?.contains(event.target)) close()
     }
     const closeOnEscape = (event) => {
-      if (event.key === 'Escape') close()
+      if (event.key === 'Escape') close(true)
     }
 
     window.addEventListener(OPEN_EVENT, closeOther)
@@ -83,40 +88,41 @@ export function MetricExplainer({
   const trigger = createElement(as, {
     className: `${className} metric-explainer${isOpen ? ' metric-explainer--open' : ''}`,
     ref: triggerRef,
-    role: 'button',
-    tabIndex: '0',
-    'aria-expanded': isOpen,
-    'aria-controls': panelId,
-    onClick: toggle,
-    onKeyDown: (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        toggle()
-      }
-    },
     ...props,
-  }, children, <span className="metric-explainer__hint"><Info aria-hidden="true" /><small>Why?</small></span>)
+  }, children, (
+    <button
+      className="metric-explainer__hint"
+      type="button"
+      ref={buttonRef}
+      aria-expanded={isOpen}
+      aria-controls={panelId}
+      aria-label={`Explain ${explanation.title}`}
+      onClick={toggle}
+    >
+      <Info aria-hidden="true" /><small>Why?</small>
+    </button>
+  ))
 
   return (
     <>
       {trigger}
       {position && createPortal(
         <>
-          <button className="metric-explanation__backdrop" type="button" aria-label="Close explanation" onClick={close} />
+          <button className="metric-explanation__backdrop" type="button" aria-label="Close explanation" onClick={() => close(true)} />
           <aside
             className={`metric-explanation metric-explanation--${position.placement} metric-explanation--${position.mode}`}
             id={panelId}
             ref={panelRef}
             role="dialog"
             aria-modal={position.mode === 'sheet' ? 'true' : undefined}
-            aria-label={explanation.title}
+            aria-labelledby={titleId}
             style={position.mode === 'popover' ? { left: position.left, top: position.top, width: position.width } : undefined}
           >
             <span className="metric-explanation__handle" aria-hidden="true" />
             <div className="metric-explanation__heading">
               <span><Info aria-hidden="true" /></span>
-              <div><small>Why this result?</small><strong>{explanation.title}</strong></div>
-              <button type="button" aria-label="Close details" onClick={close}><X aria-hidden="true" /></button>
+              <div><small>Data explanation</small><strong id={titleId}>{explanation.title}</strong></div>
+              <button type="button" aria-label="Close details" onClick={() => close(true)}><X aria-hidden="true" /></button>
             </div>
             <p className="metric-explanation__summary">{explanation.summary}</p>
             {explanation.formula && (
@@ -133,7 +139,7 @@ export function MetricExplainer({
                 </ul>
               </section>
             )}
-            <button className="metric-explanation__done" type="button" onClick={close}>Got it</button>
+            <button className="metric-explanation__done" type="button" onClick={() => close(true)}>Got it</button>
           </aside>
         </>,
         document.body,

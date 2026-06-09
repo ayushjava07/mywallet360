@@ -75,15 +75,13 @@ body { @apply m-0 min-h-screen min-w-[320px] overflow-x-hidden; color: var(--ink
 img { @apply max-w-full; }
 button { @apply font-[inherit]; }
 button:focus-visible { outline: 3px solid rgba(87,214,207,.34); outline-offset: 3px; }
-.metric-explainer { position: relative; cursor: pointer; outline: none; }
-.metric-explainer { transition: transform .18s ease, box-shadow .22s ease; }
-.metric-explainer:hover { transform: translateY(-1px); }
-.metric-explainer:focus-visible, .metric-explainer--open { transform: translateY(-2px); box-shadow: 0 0 0 3px rgba(87,214,207,.25), 0 16px 40px var(--shadow); }
-.metric-explainer__hint { position: absolute; z-index: 3; top: 9px; right: 9px; min-width: 20px; height: 20px; padding: 0 5px; border: 1px solid color-mix(in srgb, var(--primary) 14%, transparent); border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 3px; color: var(--accent); background: color-mix(in srgb, var(--surface) 90%, transparent); box-shadow: 0 3px 9px rgba(15,23,42,.06); opacity: .65; pointer-events: none; }
+.metric-explainer { position: relative; transition: box-shadow .22s ease; }
+.metric-explainer--open { box-shadow: 0 0 0 3px rgba(87,214,207,.2), 0 16px 40px var(--shadow); }
+.metric-explainer__hint { position: absolute; z-index: 3; top: 9px; right: 9px; min-width: 22px; height: 22px; padding: 0 6px; border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent); border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 3px; color: var(--accent); cursor: pointer; background: color-mix(in srgb, var(--surface) 94%, transparent); box-shadow: 0 3px 9px rgba(15,23,42,.07); opacity: .76; }
 .metric-explainer__hint svg { width: 11px; height: 11px; }
 .metric-explainer__hint small { display: none; font-size: 7px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-.metric-explainer:hover .metric-explainer__hint, .metric-explainer:focus-visible .metric-explainer__hint, .metric-explainer--open .metric-explainer__hint { opacity: 1; }
-.metric-explainer:hover .metric-explainer__hint small, .metric-explainer:focus-visible .metric-explainer__hint small, .metric-explainer--open .metric-explainer__hint small { display: inline; }
+.metric-explainer__hint:hover, .metric-explainer__hint:focus-visible, .metric-explainer--open .metric-explainer__hint { opacity: 1; border-color: color-mix(in srgb, var(--primary) 38%, transparent); background: var(--surface); }
+.metric-explainer__hint:hover small, .metric-explainer__hint:focus-visible small, .metric-explainer--open .metric-explainer__hint small { display: inline; }
 .metric-explanation__backdrop { display: none; }
 .metric-explanation { position: fixed; z-index: 2000; display: grid; gap: 12px; padding: 16px; border: 1px solid rgba(20,184,166,.2); border-radius: 19px; color: var(--ink); background: color-mix(in srgb, var(--elevated) 97%, transparent); box-shadow: 0 24px 65px rgba(15,23,42,.23); animation: metric-explanation-in .18s ease both; }
 .metric-explanation--above { transform: translateY(-100%); transform-origin: bottom center; }
@@ -667,8 +665,7 @@ html[data-theme="dark"] .bottom-nav button.active > span { box-shadow: 0 0 22px 
 }
 
 @media (max-width: 700px) {
-  .metric-explainer:hover { transform: none; }
-  .metric-explainer:focus-visible, .metric-explainer--open { transform: none; box-shadow: 0 0 0 2px rgba(87,214,207,.24), 0 12px 30px var(--shadow); }
+  .metric-explainer--open { box-shadow: 0 0 0 2px rgba(87,214,207,.2), 0 12px 30px var(--shadow); }
   .metric-explainer__hint { min-width: 22px; height: 22px; padding: 0; opacity: .72; }
   .metric-explainer__hint small { display: none !important; }
   .metric-explanation__backdrop { position: fixed; z-index: 1999; inset: 0; display: block; border: 0; background: rgba(4,15,20,.48); backdrop-filter: blur(3px); animation: metric-backdrop-in .2s ease both; }
