@@ -75,13 +75,21 @@ body { @apply m-0 min-h-screen min-w-[320px] overflow-x-hidden; color: var(--ink
 img { @apply max-w-full; }
 button { @apply font-[inherit]; }
 button:focus-visible { outline: 3px solid rgba(87,214,207,.34); outline-offset: 3px; }
-.metric-explainer { position: relative; cursor: help; outline: none; }
-.metric-explainer:focus-visible { box-shadow: 0 0 0 3px rgba(87,214,207,.3), 0 14px 38px var(--shadow); }
-.metric-explainer__hint { position: absolute; z-index: 3; top: 9px; right: 9px; width: 13px; height: 13px; padding: 2px; border-radius: 50%; color: color-mix(in srgb, currentColor 62%, transparent); background: color-mix(in srgb, var(--surface) 72%, transparent); opacity: .38; pointer-events: none; }
-.metric-explainer:hover .metric-explainer__hint, .metric-explainer:focus-visible .metric-explainer__hint { opacity: 1; }
-.metric-explanation { position: fixed; z-index: 2000; display: grid; gap: 7px; padding: 14px; border: 1px solid rgba(20,184,166,.2); border-radius: 15px; color: var(--ink); background: color-mix(in srgb, var(--elevated) 97%, transparent); box-shadow: 0 20px 55px rgba(15,23,42,.2); pointer-events: none; animation: metric-explanation-in .16s ease both; }
+.metric-explainer { position: relative; cursor: pointer; outline: none; }
+.metric-explainer:focus-visible, .metric-explainer--open { box-shadow: 0 0 0 3px rgba(87,214,207,.3), 0 14px 38px var(--shadow); }
+.metric-explainer__hint { position: absolute; z-index: 3; top: 9px; right: 9px; min-width: 20px; height: 20px; padding: 0 5px; border: 1px solid color-mix(in srgb, var(--primary) 14%, transparent); border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 3px; color: var(--accent); background: color-mix(in srgb, var(--surface) 90%, transparent); box-shadow: 0 3px 9px rgba(15,23,42,.06); opacity: .65; pointer-events: none; }
+.metric-explainer__hint svg { width: 11px; height: 11px; }
+.metric-explainer__hint small { display: none; font-size: 7px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.metric-explainer:hover .metric-explainer__hint, .metric-explainer:focus-visible .metric-explainer__hint, .metric-explainer--open .metric-explainer__hint { opacity: 1; }
+.metric-explainer:hover .metric-explainer__hint small, .metric-explainer:focus-visible .metric-explainer__hint small, .metric-explainer--open .metric-explainer__hint small { display: inline; }
+.metric-explanation { position: fixed; z-index: 2000; display: grid; gap: 9px; padding: 14px; border: 1px solid rgba(20,184,166,.2); border-radius: 17px; color: var(--ink); background: color-mix(in srgb, var(--elevated) 97%, transparent); box-shadow: 0 22px 60px rgba(15,23,42,.22); animation: metric-explanation-in .16s ease both; }
 .metric-explanation--above { transform: translateY(-100%); transform-origin: bottom center; }
-.metric-explanation strong { padding-right: 14px; font-size: 12px; letter-spacing: -.02em; }
+.metric-explanation__heading { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 8px; }
+.metric-explanation__heading > span { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 8px; color: var(--accent); background: color-mix(in srgb, var(--primary) 11%, transparent); }
+.metric-explanation__heading svg { width: 13px; height: 13px; }
+.metric-explanation__heading button { width: 26px; height: 26px; border: 0; border-radius: 8px; display: grid; place-items: center; color: var(--muted); cursor: pointer; background: transparent; }
+.metric-explanation__heading button:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.metric-explanation strong { font-size: 12px; letter-spacing: -.02em; }
 .metric-explanation p { color: var(--muted); font-size: 10px; line-height: 1.55; }
 .metric-explanation code { padding: 7px 8px; border-radius: 8px; color: var(--accent); background: color-mix(in srgb, var(--primary) 9%, transparent); font-family: inherit; font-size: 9px; font-weight: 750; line-height: 1.45; white-space: normal; }
 .metric-explanation ul { margin: 0; padding-left: 15px; display: grid; gap: 3px; color: var(--muted); font-size: 9px; line-height: 1.45; }
