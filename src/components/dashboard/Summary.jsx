@@ -28,7 +28,7 @@ export function Summary({ flow }) {
     <section className="summary relative min-[900px]:px-0.5">
       <SectionLabel>Summary</SectionLabel>
       <div className="summary__heading mt-2 mb-[22px] flex items-end justify-between gap-4 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-1">
-        <div><h2>Last 30 Days</h2><span>Wallet Money Flow Report</span></div>
+        <div><h2>{flow.periodLabel}</h2><span>Wallet Money Flow Report</span></div>
         <span>Where did my money go?</span>
       </div>
       <div className="flow-grid relative grid grid-cols-2 gap-[18px] max-[700px]:grid-cols-1">

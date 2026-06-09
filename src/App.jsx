@@ -11,7 +11,7 @@ import { BottomNav } from './components/layout/BottomNav'
 import { Header } from './components/layout/Header'
 import { useTheme } from './hooks/useTheme'
 import { useWalletDashboard } from './hooks/useWalletDashboard'
-import { walletService } from './services/walletService'
+import { ANALYSIS_PERIODS, walletService } from './services/walletService'
 
 const exampleWallets = walletService.listExampleWallets()
 
@@ -21,11 +21,15 @@ export default function App() {
     error,
     searchValue,
     isLoading,
+    isPeriodLoading,
+    pendingAnalysisDays,
     isResolving,
+    analysisDays,
     resolvedIdentifier,
     setSearchValue,
     searchWallet,
     selectExampleWallet,
+    selectAnalysisPeriod,
     connectedAddress,
     walletProviders,
     isConnecting,
@@ -63,7 +67,15 @@ export default function App() {
           <main className={`grid gap-9 max-[700px]:gap-6 ${isLoading ? 'dashboard-loading' : 'dashboard-ready'}`} key={wallet.id}>
             {isLoading && <DashboardLoader />}
             <div className="dashboard-grid dashboard-grid--top grid gap-6 min-[900px]:grid-cols-2 min-[1180px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-              <BalanceCard balance={wallet.balance} />
+              <BalanceCard
+                balance={wallet.balance}
+                periods={ANALYSIS_PERIODS}
+                selectedDays={analysisDays}
+                pendingDays={pendingAnalysisDays}
+                isLoading={isPeriodLoading}
+                error={error}
+                onPeriodChange={selectAnalysisPeriod}
+              />
               <PortfolioCard portfolio={wallet.portfolio} />
               <IdentityCard stats={wallet.identity} />
               <WalletPersonality personality={wallet.personality} />

@@ -1,6 +1,12 @@
 import { apiFetch } from '../utils/api.js'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+export const ANALYSIS_PERIODS = [
+  { days: 1, label: 'Last day', shortLabel: '1D', description: 'Today’s activity' },
+  { days: 7, label: 'Last week', shortLabel: '7D', description: 'Recent activity' },
+  { days: 30, label: 'Last 30 days', shortLabel: '30D', description: 'Monthly overview' },
+  { days: 365, label: 'Last year', shortLabel: '1Y', description: 'Long-term activity' },
+]
 const DEFAULT_AVATAR = 'cebc058af93e566c96200932c258f395cbf87ebd.png'
 const EXAMPLE_WALLETS = [
   {
@@ -93,6 +99,8 @@ function buildTransactions(timeline) {
 }
 
 function buildWallet(address, analytics) {
+  const periodLabel = ANALYSIS_PERIODS.find((period) => period.days === analytics.period.days)?.label
+    || `Last ${analytics.period.days} days`
   const personalityTraits = Object.entries(analytics.personality)
     .map(([key, value]) => ({ ...personalityConfig[key], value }))
     .sort((first, second) => second.value - first.value)
@@ -106,6 +114,7 @@ function buildWallet(address, analytics) {
 
   return {
     id: address.toLowerCase(),
+    analysisDays: analytics.period.days,
     chipLabel: compactAddress(address),
     profile: {
       name: 'Wallet Analytics',
@@ -114,7 +123,10 @@ function buildWallet(address, analytics) {
     },
     balance: {
       value: formatUsd(analytics.netWorth),
-      growth: 'Last 30 days',
+      valuationLabel: analytics.valuation?.source === 'alchemy'
+        ? `Alchemy priced assets${analytics.valuation.complete === false ? ' (partial)' : ''}`
+        : 'Estimated priced assets',
+      growth: periodLabel,
       rank: `${analytics.transactionCount.toLocaleString()} txns`,
       stats: [
         { label: 'Transactions', value: analytics.transactionCount.toLocaleString(), icon: 'rank' },
@@ -141,9 +153,9 @@ function buildWallet(address, analytics) {
     },
     identity: [
       { label: 'Portfolio Score', value: `${portfolioScore}/100`, description: 'Based on wallet value and activity', icon: 'portfolio', tone: 'gold' },
-      { label: 'Transactions', value: analytics.transactionCount.toLocaleString(), description: 'Activity in the last 30 days', icon: 'risk', tone: 'blue' },
+      { label: 'Transactions', value: analytics.transactionCount.toLocaleString(), description: `Activity during ${periodLabel.toLowerCase()}`, icon: 'risk', tone: 'blue' },
       { label: 'NFT Holdings', value: analytics.nftCount.toLocaleString(), description: 'Current NFT collection size', icon: 'age', tone: 'purple' },
-      { label: 'Data Source', value: 'Etherscan', description: 'Last 30 days of on-chain analytics', icon: 'kyc', tone: 'green' },
+      { label: 'Data Source', value: analytics.valuation?.source === 'alchemy' ? 'Alchemy + Etherscan' : 'Etherscan', description: `${periodLabel} of activity with current priced assets`, icon: 'kyc', tone: 'green' },
     ],
     personality: {
       title: primaryPersonality?.label || 'New Wallet',
@@ -151,8 +163,8 @@ function buildWallet(address, analytics) {
       traits: personalityTraits,
     },
     ai: {
-      summary: `${compactAddress(address)} has ${analytics.transactionCount.toLocaleString()} transactions and a net worth of ${formatUsd(analytics.netWorth)}.`,
-      confidence: 'Based on the last 30 days of activity',
+      summary: `${compactAddress(address)} has ${analytics.transactionCount.toLocaleString()} transactions and ${formatUsd(analytics.netWorth)} in currently priced assets.`,
+      confidence: `Based on activity from ${periodLabel.toLowerCase()}`,
       insights: [
         { text: `${activityLevel} wallet activity.`, detail: `${analytics.transactionCount.toLocaleString()} transactions`, icon: 'network', tone: 'blue' },
         { text: `${analytics.nftCount.toLocaleString()} NFTs currently held.`, detail: 'Collection activity', icon: 'risk', tone: 'green' },
@@ -160,6 +172,7 @@ function buildWallet(address, analytics) {
       ],
     },
     flow: {
+      periodLabel,
       received: { value: `+${formatNumber(analytics.moneyFlow.received)} ETH`, percent: receivedPercent },
       spent: { value: `-${formatNumber(analytics.moneyFlow.spent)} ETH`, percent: spentPercent },
       categories: [
@@ -172,27 +185,31 @@ function buildWallet(address, analytics) {
       { label: 'Largest Holding', value: largestHolding?.symbol || 'None', detail: `${largestHolding?.percentage || 0}%`, icon: 'holding', tone: 'violet' },
       { label: 'Money Received', value: `${formatNumber(analytics.moneyFlow.received)} ETH`, detail: `${analytics.moneyFlow.incomingCount} transfers`, icon: 'protocol', tone: 'pink' },
       { label: 'Money Spent', value: `${formatNumber(analytics.moneyFlow.spent)} ETH`, detail: `${analytics.moneyFlow.outgoingCount} transfers`, icon: 'chain', tone: 'blue' },
-      { label: 'Transactions', value: analytics.transactionCount.toLocaleString(), detail: 'last 30 days', icon: 'transactions', tone: 'green' },
+      { label: 'Transactions', value: analytics.transactionCount.toLocaleString(), detail: periodLabel.toLowerCase(), icon: 'transactions', tone: 'green' },
     ],
     insights: [
-      { label: 'Net Worth', value: formatNumber(analytics.netWorth, 2), suffix: 'USD' },
+      { label: 'Priced Assets', value: formatNumber(analytics.netWorth, 2), suffix: 'USD' },
       { label: 'Largest Holding', value: largestHolding?.percentage || 0, suffix: '%' },
     ],
   }
 }
 
-async function getWalletByAddress(address) {
+async function getWalletByAddress(address, days = 30) {
   const normalizedAddress = address.trim()
 
   if (!/^0x[a-fA-F0-9]{40}$/.test(normalizedAddress)) {
     throw new Error('Enter a valid Ethereum wallet address.')
   }
 
-  const response = await apiFetch(`${API_BASE_URL}/api/wallet/${normalizedAddress}`)
+  const response = await apiFetch(`${API_BASE_URL}/api/wallet/${normalizedAddress}?days=${days}`)
   const data = await response.json().catch(() => null)
 
   if (!response.ok) {
     throw new Error(data?.message || 'Unable to fetch wallet analytics.')
+  }
+
+  if (data?.period?.days !== days) {
+    throw new Error('The API returned stale period data. Restart or deploy the latest backend.')
   }
 
   return buildWallet(normalizedAddress, data)

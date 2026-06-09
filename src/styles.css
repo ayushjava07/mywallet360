@@ -105,6 +105,7 @@ h1, h2, h3 { color: var(--ink); font-weight: 800; letter-spacing: -.035em; }
 .brand-mark { background: transparent; }
 .brand-mark img { width: 122px; max-width: none; height: 81px; object-fit: contain; object-position: center; }
 .profile__brand-copy h1 { margin: 0; display: flex; align-items: baseline; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 27px; line-height: 1; font-weight: 850; letter-spacing: -.065em; }
+.profile__welcome { color: var(--muted); font-size: 9px; line-height: 1; font-weight: 750; text-transform: uppercase; letter-spacing: .14em; }
 .brand-360 { margin-left: 2px; padding-right: 2px; color: #14b8a6; letter-spacing: -.07em; }
 .profile__tagline { overflow: hidden; color: #68898c; font-size: 11px; line-height: 1.2; font-weight: 700; letter-spacing: .005em; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .eyebrow { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; }
@@ -670,6 +671,7 @@ html[data-theme="dark"] .bottom-nav button.active > span { box-shadow: 0 0 22px 
   .brand-mark { width: 52px; height: 52px; border-radius: 13px; }
   .brand-mark img { width: 84px; height: 56px; }
   .profile__tagline { font-size: 8px; }
+  .profile__welcome { font-size: 7px; }
   .icon-button { @apply size-10; }
   .header__actions { @apply gap-[5px]; }
   .notification-panel { position: fixed; top: 78px; right: 12px; left: 12px; width: auto; }

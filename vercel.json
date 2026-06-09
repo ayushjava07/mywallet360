@@ -30,11 +30,5 @@
         }
       ]
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://mywallet360.onrender.com/api/:path*"
-    }
   ]
 }

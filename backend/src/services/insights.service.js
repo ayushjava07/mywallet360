@@ -6,7 +6,7 @@ function fallbackInsights(analytics) {
   )[0];
 
   return {
-    summary: `This wallet has ${analytics.transactionCount} transactions in the last 30 days and an estimated net worth of $${analytics.netWorth}.`,
+    summary: `This wallet has ${analytics.transactionCount} transactions in the last ${analytics.period.days} days and $${analytics.netWorth} in currently priced assets.`,
     personalityExplanation: `${primaryPersonality?.[0] || "holder"} is the strongest observed behavior.`,
     riskExplanation: `Risk is ${analytics.riskScore.level.toLowerCase()} based on concentration, behavior, protocol diversity, and wallet age.`,
     insights: [

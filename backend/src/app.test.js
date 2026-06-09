@@ -37,6 +37,16 @@ test("rejects invalid wallet addresses before calling upstream services", async 
   });
 });
 
+test("rejects unsupported analysis periods before calling upstream services", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/wallet/0x742d35Cc6634C0532925a3b844Bc454e4438f44e?days=20`);
+    const body = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(body.code, "INVALID_ANALYSIS_PERIOD");
+  });
+});
+
 test("returns a consistent response for unknown endpoints", async () => {
   await withServer(async (baseUrl) => {
     const response = await fetch(`${baseUrl}/missing`);

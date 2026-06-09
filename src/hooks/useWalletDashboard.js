@@ -3,9 +3,12 @@ import { walletService } from '../services/walletService'
 import { resolveWalletIdentifier } from '../utils/resolveWalletIdentifier'
 
 export function useWalletDashboard() {
+  const [analysisDays, setAnalysisDays] = useState(30)
   const [wallet, setWallet] = useState(null)
   const [searchValue, setSearchValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isPeriodLoading, setIsPeriodLoading] = useState(false)
+  const [pendingAnalysisDays, setPendingAnalysisDays] = useState(null)
   const [isResolving, setIsResolving] = useState(false)
   const [resolvedIdentifier, setResolvedIdentifier] = useState(null)
   const [error, setError] = useState('')
@@ -16,29 +19,49 @@ export function useWalletDashboard() {
   const [connectionError, setConnectionError] = useState('')
   const isLoadingRef = useRef(false)
 
-  const analyzeWallet = useCallback(async (identifier) => {
+  const analyzeWallet = useCallback(async (identifier, days = analysisDays, options = {}) => {
     if (isLoadingRef.current) return
 
+    const periodChange = options.periodChange === true
     isLoadingRef.current = true
-    setIsResolving(true)
+    if (periodChange) {
+      setIsPeriodLoading(true)
+    } else {
+      setIsResolving(true)
+    }
     setError('')
 
     try {
-      const resolution = await resolveWalletIdentifier(identifier)
-      setResolvedIdentifier(resolution)
+      const resolution = periodChange
+        ? { address: identifier, type: 'address', originalInput: identifier }
+        : await resolveWalletIdentifier(identifier)
+      if (!periodChange) setResolvedIdentifier(resolution)
       setIsResolving(false)
-      setIsLoading(true)
+      if (!periodChange) setIsLoading(true)
 
-      const nextWallet = await walletService.getWalletByAddress(resolution.address)
-      setWallet(nextWallet)
+      const nextWallet = await walletService.getWalletByAddress(resolution.address, days)
+      setWallet((currentWallet) => (
+        periodChange && currentWallet
+          ? {
+              ...nextWallet,
+              balance: {
+                ...nextWallet.balance,
+                value: currentWallet.balance.value,
+              },
+            }
+          : nextWallet
+      ))
+      setAnalysisDays(days)
     } catch (requestError) {
       setError(requestError.message)
     } finally {
       isLoadingRef.current = false
       setIsResolving(false)
       setIsLoading(false)
+      setIsPeriodLoading(false)
+      setPendingAnalysisDays(null)
     }
-  }, [])
+  }, [analysisDays])
 
   const searchWallet = () => analyzeWallet(searchValue)
   const updateSearchValue = (value) => {
@@ -49,6 +72,12 @@ export function useWalletDashboard() {
   const selectExampleWallet = (address) => {
     setSearchValue(address)
     analyzeWallet(address)
+  }
+  const selectAnalysisPeriod = (days) => {
+    if (!wallet || isLoadingRef.current) return
+
+    setPendingAnalysisDays(days)
+    analyzeWallet(wallet.id, days, { periodChange: true })
   }
 
   useEffect(() => {
@@ -152,11 +181,15 @@ export function useWalletDashboard() {
     wallet,
     searchValue,
     isLoading,
+    isPeriodLoading,
+    pendingAnalysisDays,
     isResolving,
+    analysisDays,
     resolvedIdentifier,
     setSearchValue: updateSearchValue,
     searchWallet,
     selectExampleWallet,
+    selectAnalysisPeriod,
     connectedAddress,
     walletProviders,
     isConnecting,
