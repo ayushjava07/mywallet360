@@ -190,7 +190,7 @@ function buildWallet(address, analytics) {
         },
         { label: 'Risk Level', value: analytics.riskScore.level, detail: `${analytics.riskScore.score}/100 heuristic score`, icon: 'nft' },
         { label: 'Most Used Protocol', value: analytics.mostUsedProtocol.name, detail: `${analytics.mostUsedProtocol.interactionCount} recognized interactions`, icon: 'defi' },
-        { label: 'Discovered Assets', value: analytics.assetCount.toLocaleString(), detail: analytics.valuation.complete ? 'Transfer scan completed' : 'Partial transfer scan', icon: 'collection' },
+        { label: 'Discovered Assets', value: Number(analytics.assetCount ?? analytics.valuation?.totalAssetCount ?? 0).toLocaleString(), detail: analytics.valuation.complete ? 'Transfer scan completed' : 'Partial transfer scan', icon: 'collection' },
       ],
     },
     identity: [
