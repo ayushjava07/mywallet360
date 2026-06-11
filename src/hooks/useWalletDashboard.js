@@ -40,17 +40,7 @@ export function useWalletDashboard() {
       if (!periodChange) setIsLoading(true)
 
       const nextWallet = await walletService.getWalletByAddress(resolution.address, days)
-      setWallet((currentWallet) => (
-        periodChange && currentWallet
-          ? {
-              ...nextWallet,
-              balance: {
-                ...nextWallet.balance,
-                value: currentWallet.balance.value,
-              },
-            }
-          : nextWallet
-      ))
+      setWallet(nextWallet)
       setAnalysisDays(days)
     } catch (requestError) {
       setError(requestError.message)

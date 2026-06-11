@@ -13,9 +13,7 @@ import {
   WalletCards,
 } from 'lucide-react'
 import calendar3d from '@iconify-icons/fluent-emoji/calendar'
-import globe3d from '@iconify-icons/fluent-emoji/globe-with-meridians'
 import identificationCard3d from '@iconify-icons/fluent-emoji/identification-card'
-import rocket3d from '@iconify-icons/fluent-emoji/rocket'
 import shield3d from '@iconify-icons/fluent-emoji/shield'
 import trophy3d from '@iconify-icons/fluent-emoji/trophy'
 
@@ -45,12 +43,6 @@ export const identityIcons = {
   risk: shield3d,
   age: calendar3d,
   kyc: identificationCard3d,
-}
-
-export const aiIcons = {
-  network: globe3d,
-  risk: shield3d,
-  growth: rocket3d,
 }
 
 export const highlightIcons = {
