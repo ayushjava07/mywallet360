@@ -42,7 +42,7 @@ function Highlight({ highlight }) {
   )
 }
 
-export function Activity({ transactions, highlights }) {
+export function Activity({ transactions, highlights, periodLabel }) {
   const [showAll, setShowAll] = useState(false)
   const visibleTransactions = showAll ? transactions : transactions.slice(0, 3)
 
@@ -51,19 +51,22 @@ export function Activity({ transactions, highlights }) {
       <div className="activity-layout grid grid-cols-[minmax(0,1.65fr)_minmax(300px,.9fr)] items-stretch gap-[18px] max-[1050px]:grid-cols-[minmax(0,1.35fr)_minmax(270px,.85fr)] max-[1050px]:gap-[14px] max-[899px]:grid-cols-1">
         <div className="card activity-feed rounded-3xl border-0 p-[22px] max-[1050px]:p-[18px] max-[480px]:rounded-[20px] max-[480px]:p-3.5">
           <div className="activity-card__heading flex min-h-[35px] items-center justify-between gap-4">
-            <div className="grid gap-[3px]"><span>Wallet timeline</span><h2>Recent Activity</h2></div>
-            <button type="button" onClick={() => setShowAll((value) => !value)}>
-              {showAll ? 'Show Less' : 'See All'}
-            </button>
+            <div className="grid gap-[3px]"><span>{periodLabel}</span><h2>Recent Activity</h2></div>
+            {transactions.length > 3 && (
+              <button type="button" onClick={() => setShowAll((value) => !value)}>
+                {showAll ? 'Show Less' : 'See All'}
+              </button>
+            )}
           </div>
           <div className="transaction-list mt-3 grid grid-cols-1 gap-[3px]">
             {visibleTransactions.map((item) => <Transaction item={item} key={item.title} />)}
+            {!transactions.length && <p>No normal transactions found during this period.</p>}
           </div>
         </div>
 
         <aside className="card highlights-card rounded-3xl border-0 p-[22px] max-[1050px]:p-[18px] max-[480px]:rounded-[20px] max-[480px]:p-3.5">
           <div className="activity-card__heading flex min-h-[35px] items-center justify-between gap-4">
-            <div className="grid gap-[3px]"><span>Wallet intelligence</span><h2>Key Highlights</h2></div>
+            <div className="grid gap-[3px]"><span>{periodLabel}</span><h2>Key Highlights</h2></div>
           </div>
           <div className="highlights-list mt-3 grid gap-[7px] max-[899px]:grid-cols-2 max-[480px]:grid-cols-1">
             {highlights.map((highlight) => <Highlight highlight={highlight} key={highlight.label} />)}
