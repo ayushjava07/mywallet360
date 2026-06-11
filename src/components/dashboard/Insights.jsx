@@ -9,10 +9,7 @@ export function Insights({ insights }) {
             <Icon name={index === 0 ? '99_959.svg' : '99_969.svg'} alt="" />
           </span>
           <span>{insight.label}</span>
-          <strong>
-            {insight.suffix === 'USD' && <small>$</small>} {insight.value}{' '}
-            {insight.suffix !== 'USD' && <small>{insight.suffix}</small>}
-          </strong>
+          <strong>{insight.value} <small>{insight.suffix}</small></strong>
         </article>
       ))}
     </section>

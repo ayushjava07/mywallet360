@@ -1,5 +1,4 @@
 import { Activity } from './components/dashboard/Activity'
-import { AIInsights } from './components/dashboard/AIInsights'
 import { BalanceCard } from './components/dashboard/BalanceCard'
 import { DashboardLoader } from './components/dashboard/DashboardLoader'
 import { IdentityCard } from './components/dashboard/IdentityCard'
@@ -80,9 +79,8 @@ export default function App() {
               <IdentityCard stats={wallet.identity} />
               <WalletPersonality personality={wallet.personality} />
             </div>
-            <AIInsights ai={wallet.ai} />
             <Summary flow={wallet.flow} />
-            <Activity transactions={wallet.transactions} highlights={wallet.highlights} />
+            <Activity transactions={wallet.transactions} highlights={wallet.highlights} periodLabel={wallet.periodLabel} />
             <Insights insights={wallet.insights} />
           </main>
           <BottomNav />

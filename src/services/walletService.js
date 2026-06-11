@@ -1,4 +1,5 @@
 import { apiFetch } from '../utils/api.js'
+import { formatCount } from '../utils/formatCount.js'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 export const ANALYSIS_PERIODS = [
@@ -138,12 +139,14 @@ function buildWallet(address, analytics) {
   const receivedPercent = flowTotal ? Math.round((analytics.moneyFlow.received / flowTotal) * 100) : 0
   const spentPercent = flowTotal ? 100 - receivedPercent : 0
   const activityLevel = analytics.transactionCount > 500 ? 'Very High' : analytics.transactionCount > 100 ? 'High' : 'Moderate'
+  const transactionCount = formatCount(analytics.transactionCount, analytics.analysisWindow?.normalTransactionsComplete)
   const portfolioScore = Math.min(99, Math.round(50 + Math.log10(analytics.netWorth + 1) * 12))
   const largestHolding = analytics.largestHolding
 
   return {
     id: address.toLowerCase(),
     analysisDays: analytics.period.days,
+    periodLabel,
     chipLabel: compactAddress(address),
     profile: {
       name: 'Wallet Analytics',
@@ -152,32 +155,30 @@ function buildWallet(address, analytics) {
     },
     balance: {
       value: formatUsd(analytics.netWorth),
-      valuationLabel: analytics.valuation?.source === 'alchemy'
-        ? `Alchemy priced assets${analytics.valuation.complete === false ? ' (partial)' : ''}`
-        : 'Estimated priced assets',
+      valuationLabel: `Etherscan estimated priced assets${analytics.valuation.complete === false ? ' (partial)' : ''}`,
       growth: periodLabel,
-      rank: `${analytics.transactionCount.toLocaleString()} txns`,
+      rank: `${transactionCount} txns`,
       explanation: explanation(
-        'How priced assets are calculated',
-        'This is the sum of current token balances that have a USD price from the active valuation provider.',
-        'Priced assets = Σ(token balance × USD token price)',
+        'How period-estimated assets are calculated',
+        'This sums ETH and supported token balances estimated from Etherscan data for the selected period.',
+        'Estimated priced assets = Σ(estimated token balance × supported USD price)',
         [
           `${analytics.valuation?.pricedAssetCount || 0} of ${analytics.valuation?.totalAssetCount || 0} discovered assets had prices.`,
-          `Source: ${analytics.valuation?.source === 'alchemy' ? 'Alchemy portfolio prices' : 'Etherscan-based fallback estimate'}.`,
-          analytics.valuation?.complete === false ? 'The provider result hit the page cap, so this value is partial.' : 'Provider pagination completed.',
+          'Source: Etherscan balances, prices, and transfer history.',
+          analytics.valuation?.complete === false ? 'Token-transfer history hit the page cap, so this estimate is partial.' : 'Token-transfer pagination completed for the selected period.',
         ],
       ),
       stats: [
-        { label: 'Transactions', value: analytics.transactionCount.toLocaleString(), icon: 'rank' },
-        { label: 'Activity', value: activityLevel, icon: 'activity', explanation: explanation('Activity level', 'A simple label based on transaction count in the selected period.', 'Very High: >500 · High: >100 · Moderate: ≤100', [`This wallet has ${analytics.transactionCount.toLocaleString()} transactions.`]) },
-        { label: 'NFTs', value: analytics.nftCount.toLocaleString(), icon: 'risk' },
+        { label: 'Transactions', value: transactionCount, icon: 'rank' },
+        { label: 'Activity', value: activityLevel, icon: 'activity', explanation: explanation('Activity level', 'A simple label based on transaction count in the selected period.', 'Very High: >500 · High: >100 · Moderate: ≤100', [`This wallet has ${transactionCount} transactions in the selected period.`]) },
+        { label: 'NFT Activity', value: analytics.personalityFactors?.nftTransfers?.toLocaleString() || '0', icon: 'risk' },
         { label: 'Network', value: 'Ethereum', icon: 'network' },
       ],
     },
     portfolio: {
       status: analytics.netWorth > 0 ? 'Active' : 'Empty',
       score: portfolioScore,
-      scoreExplanation: explanation('Portfolio Score', 'A presentation score based on the logarithm of currently priced asset value.', 'min(99, round(50 + log10(priced assets + 1) × 12))', [`Current score: ${portfolioScore}/100.`]),
+      scoreExplanation: explanation('Portfolio Score', 'A presentation score based on the logarithm of the selected period asset estimate.', 'min(99, round(50 + log10(estimated priced assets + 1) × 12))', [`Current score: ${portfolioScore}/100.`]),
       metrics: [
         {
           label: 'Largest Holding',
@@ -185,33 +186,24 @@ function buildWallet(address, analytics) {
           detail: largestHolding ? formatUsd(largestHolding.usdValue) : 'No priced holdings',
           icon: 'wallet',
           primary: true,
-          explanation: explanation('Largest priced holding', 'The priced asset with the highest calculated USD value.', 'Largest holding = max(balance × USD price)', [`It represents ${largestHolding?.percentage || 0}% of all currently priced assets.`]),
+          explanation: explanation('Largest priced holding', 'The priced asset with the highest calculated USD value in this estimate.', 'Largest holding = max(balance × USD price)', [`It represents ${largestHolding?.percentage || 0}% of the selected period estimate.`]),
         },
-        { label: 'NFT Count', value: analytics.nftCount.toLocaleString(), detail: 'Items collected', icon: 'nft' },
-        { label: 'Received', value: `${formatNumber(analytics.moneyFlow.received)} ETH`, detail: `${analytics.moneyFlow.incomingCount} transfers`, icon: 'defi' },
-        { label: 'Spent', value: `${formatNumber(analytics.moneyFlow.spent)} ETH`, detail: `${analytics.moneyFlow.outgoingCount} transfers`, icon: 'collection' },
+        { label: 'Risk Level', value: analytics.riskScore.level, detail: `${analytics.riskScore.score}/100 heuristic score`, icon: 'nft' },
+        { label: 'Most Used Protocol', value: analytics.mostUsedProtocol.name, detail: `${analytics.mostUsedProtocol.interactionCount} recognized interactions`, icon: 'defi' },
+        { label: 'Discovered Assets', value: analytics.assets.length.toLocaleString(), detail: analytics.valuation.complete ? 'Transfer scan completed' : 'Partial transfer scan', icon: 'collection' },
       ],
     },
     identity: [
-      { label: 'Portfolio Score', value: `${portfolioScore}/100`, description: 'Based on wallet value and activity', icon: 'portfolio', tone: 'gold' },
-      { label: 'Transactions', value: analytics.transactionCount.toLocaleString(), description: `Activity during ${periodLabel.toLowerCase()}`, icon: 'risk', tone: 'blue' },
-      { label: 'NFT Holdings', value: analytics.nftCount.toLocaleString(), description: 'Current NFT collection size', icon: 'age', tone: 'purple' },
-      { label: 'Data Source', value: analytics.valuation?.source === 'alchemy' ? 'Alchemy + Etherscan' : 'Etherscan', description: `${periodLabel} of activity with current priced assets`, icon: 'kyc', tone: 'green' },
+      { label: 'Portfolio Score', value: `${portfolioScore}/100`, description: 'Based on the selected period asset estimate', icon: 'portfolio', tone: 'gold' },
+      { label: 'Transactions', value: transactionCount, description: `Activity during ${periodLabel.toLowerCase()}`, icon: 'risk', tone: 'blue' },
+      { label: 'NFT Activity', value: analytics.personalityFactors?.nftTransfers?.toLocaleString() || '0', description: `Transfers during ${periodLabel.toLowerCase()}`, icon: 'age', tone: 'purple' },
+      { label: 'Data Source', value: 'Etherscan', description: analytics.valuation.complete ? 'Transfer scan completed' : 'Partial transfer scan', icon: 'kyc', tone: 'green' },
     ],
     personality: {
       title: primaryPersonality?.label || 'New Wallet',
       description: `This wallet is primarily shaped by ${primaryPersonality?.label.toLowerCase() || 'limited on-chain activity'}.`,
       traits: personalityTraits,
       explanation: personalityExplanations[Object.entries(analytics.personality).sort((first, second) => second[1] - first[1])[0]?.[0]],
-    },
-    ai: {
-      summary: `${compactAddress(address)} has ${analytics.transactionCount.toLocaleString()} transactions and ${formatUsd(analytics.netWorth)} in currently priced assets.`,
-      confidence: `Based on activity from ${periodLabel.toLowerCase()}`,
-      insights: [
-        { text: `${activityLevel} wallet activity.`, detail: `${analytics.transactionCount.toLocaleString()} transactions`, icon: 'network', tone: 'blue' },
-        { text: `${analytics.nftCount.toLocaleString()} NFTs currently held.`, detail: 'Collection activity', icon: 'risk', tone: 'green' },
-        { text: `${primaryPersonality?.label || 'No dominant behavior'} is the primary trait.`, detail: `${primaryPersonality?.value || 0}% score`, icon: 'growth', tone: 'teal' },
-      ],
     },
     flow: {
       periodLabel,
@@ -227,11 +219,11 @@ function buildWallet(address, analytics) {
       { label: 'Largest Holding', value: largestHolding?.symbol || 'None', detail: `${largestHolding?.percentage || 0}%`, icon: 'holding', tone: 'violet' },
       { label: 'Money Received', value: `${formatNumber(analytics.moneyFlow.received)} ETH`, detail: `${analytics.moneyFlow.incomingCount} transfers`, icon: 'protocol', tone: 'pink' },
       { label: 'Money Spent', value: `${formatNumber(analytics.moneyFlow.spent)} ETH`, detail: `${analytics.moneyFlow.outgoingCount} transfers`, icon: 'chain', tone: 'blue' },
-      { label: 'Transactions', value: analytics.transactionCount.toLocaleString(), detail: periodLabel.toLowerCase(), icon: 'transactions', tone: 'green' },
+      { label: 'Transactions', value: transactionCount, detail: periodLabel.toLowerCase(), icon: 'transactions', tone: 'green' },
     ],
     insights: [
-      { label: 'Priced Assets', value: formatNumber(analytics.netWorth, 2), suffix: 'USD' },
-      { label: 'Largest Holding', value: largestHolding?.percentage || 0, suffix: '%' },
+      { label: 'Risk Level', value: analytics.riskScore.level, suffix: `${analytics.riskScore.score}/100` },
+      { label: 'Recognized Protocol', value: analytics.mostUsedProtocol.name, suffix: `${analytics.mostUsedProtocol.interactionCount} interactions` },
     ],
   }
 }
