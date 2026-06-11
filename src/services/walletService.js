@@ -147,6 +147,10 @@ function buildWallet(address, analytics) {
     id: address.toLowerCase(),
     analysisDays: analytics.period.days,
     periodLabel,
+    reportRange: {
+      from: analytics.period.start.slice(0, 10),
+      to: analytics.period.end.slice(0, 10),
+    },
     chipLabel: compactAddress(address),
     profile: {
       name: 'Wallet Analytics',
@@ -249,7 +253,34 @@ async function getWalletByAddress(address, days = 30) {
   return buildWallet(normalizedAddress, data)
 }
 
+async function downloadTransactionReport(address, from, to) {
+  const query = new URLSearchParams({ from, to })
+  const response = await apiFetch(`${API_BASE_URL}/api/report/${address}?${query}`, {
+    headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null)
+    throw new Error(data?.message || 'Unable to create the transaction report.')
+  }
+
+  const blob = await response.blob()
+  const downloadUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const disposition = response.headers.get('content-disposition') || ''
+  const filename = disposition.match(/filename="([^"]+)"/)?.[1]
+    || `mywallet360-${address.slice(0, 8)}-${from}-to-${to}.xlsx`
+
+  link.href = downloadUrl
+  link.download = filename
+  document.body.append(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(downloadUrl)
+}
+
 export const walletService = {
+  downloadTransactionReport,
   getWalletByAddress,
   listExampleWallets: () => EXAMPLE_WALLETS,
 }
