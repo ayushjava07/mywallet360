@@ -1,5 +1,4 @@
 import axios from "axios";
-import { generateInsights } from "./insights.service.js";
 import { calculatePersonalityDetails, isSwapTransaction } from "./personality.service.js";
 import { calculateRiskScore } from "./scoring.service.js";
 import {
@@ -17,7 +16,6 @@ const MAX_PAGES = 5;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const REQUEST_INTERVAL_MS = 350;
 const DEFAULT_ANALYSIS_DAYS = 30;
-const AI_INSIGHTS_ENABLED = process.env.ENABLE_AI_INSIGHTS === "true";
 const USD_PEGGED_TOKEN_ADDRESSES = new Set([
   "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // USDC
   "0xdac17f958d2ee523a2206206994597c13d831ec7", // USDT
@@ -376,6 +374,30 @@ function buildLargestHolding(assets) {
     : null;
 }
 
+export function buildPublicWalletData(analytics) {
+  return {
+    netWorth: analytics.netWorth,
+    assetCount: analytics.assetCount,
+    nftCount: analytics.nftCount,
+    transactionCount: analytics.transactionCount,
+    transactionCountIsLowerBound: analytics.transactionCountIsLowerBound,
+    largestHolding: analytics.largestHolding,
+    moneyFlow: analytics.moneyFlow,
+    personality: analytics.personality,
+    personalityFactors: analytics.personalityFactors,
+    timeline: analytics.timeline,
+    valuation: analytics.valuation,
+    mostUsedProtocol: {
+      name: analytics.mostUsedProtocol.name,
+      interactionCount: analytics.mostUsedProtocol.interactionCount,
+    },
+    riskScore: analytics.riskScore,
+    period: analytics.period,
+    analysisWindow: analytics.analysisWindow,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYSIS_DAYS) {
   const address = walletAddress.toLowerCase();
 
@@ -439,17 +461,15 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
     const netWorth = round(pricedAssets.reduce((sum, asset) => sum + asset.usdValue, 0), 2);
     const analytics = {
       netWorth,
+      assetCount: assets.length,
       nftCount: nfts.reduce((sum, nft) => sum + nft.amount, 0),
       transactionCount: normalTransactions.length,
       transactionCountIsLowerBound: !normalResult.complete,
       largestHolding: buildLargestHolding(pricedAssets),
       moneyFlow,
       personality,
-      walletPersonality,
       personalityFactors: personalityDetails.factors,
       timeline: buildTimeline(normalTransactions, address),
-      assets,
-      topAssets: pricedAssets.slice(0, 10),
       valuation: {
         source: "etherscan",
         networks: ["eth-mainnet"],
@@ -457,8 +477,6 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
         totalAssetCount: assets.length,
         complete: tokenResult.complete,
       },
-      nfts,
-      topNfts: nfts.slice(0, 10),
       mostUsedProtocol: {
         name: protocolAnalysis.name,
         interactionCount: protocolAnalysis.count,
@@ -481,10 +499,7 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
       },
     };
 
-    const result = {
-      ...analytics,
-      aiInsights: AI_INSIGHTS_ENABLED ? await generateInsights(analytics) : null,
-    };
+    const result = buildPublicWalletData(analytics);
 
     walletCache.set(cacheKey, {
       value: result,

@@ -49,20 +49,21 @@ Before deploying, run:
 npm run check
 ```
 
-Deploy the Vite `dist` directory as the frontend and run the backend with:
-
-```bash
-npm --prefix backend start
-```
-
-For local development, leave `VITE_API_URL` empty; Vite proxies `/api` requests
-to `http://localhost:5000`. In production, set `VITE_API_URL` in the frontend
-host to the public backend origin, such as `https://api.example.com`. Configure
-the frontend origin in the backend's `FRONTEND_URL` CORS allowlist.
+For local development, leave `VITE_API_URL` empty. Vite proxies `/api`
+requests to `http://localhost:5000`.
 
 ### Vercel Backend
 
-Deploy the backend as a separate Vercel project from the same repository:
+Production uses two Vercel projects from this repository:
+
+- Frontend project: repository root
+- Backend project: `backend`
+
+The frontend keeps requests same-origin, for example
+`https://mywallet360.vercel.app/api/wallet/...`. The root `vercel.json`
+forwards `/api/*` to `https://mywallet360-backend.vercel.app/api/*`.
+
+Configure the backend Vercel project with:
 
 - Root Directory: `backend`
 - Framework Preset: `Other`
@@ -70,10 +71,18 @@ Deploy the backend as a separate Vercel project from the same repository:
 - Output Directory: leave empty
 - Install Command: `npm install`
 
-Vercel uses `backend/index.js` as the serverless Express entrypoint. Add all
-required backend variables from `backend/.env.example` in the Vercel project.
-Set `NODE_ENV=production`, `FRONTEND_URL` to the frontend deployment origin,
-and `VITE_API_URL` in the frontend project to the deployed backend origin.
+Vercel uses `backend/api/index.js` as the serverless Express entrypoint. Add
+the required variables from `backend/.env.example` to the backend project:
+
+- `NODE_ENV=production`
+- `ETHERSCAN_API_KEY`
+- `FRONTEND_URL=https://mywallet360.vercel.app`
+
+Do not set `VITE_API_URL` for the standard deployment. The frontend rewrite
+keeps the backend URL and provider credentials out of browser code.
+
+The public wallet API returns only dashboard-required summaries. Large raw
+asset and NFT collections remain internal to the backend calculations.
 
 ## Local Preview
 
