@@ -32,18 +32,16 @@ Required backend variables:
 
 Optional integrations and tuning are documented in `backend/.env.example`.
 
-For broader current-wallet valuation, set `ALCHEMY_API_KEY` or use an Alchemy
-URL for `ETHEREUM_RPC_URL`. `ALCHEMY_PORTFOLIO_NETWORKS` accepts a
-comma-separated network list and defaults to `eth-mainnet`. The portfolio
-request is paginated, with a configurable `ALCHEMY_PORTFOLIO_MAX_PAGES`.
+The dashboard uses Etherscan only. ETH balance and price come from Etherscan,
+while ERC-20 balances are estimated from transfers during the selected
+analysis period. USD values are available only for ETH, a small hardcoded list
+of USD-pegged tokens, and ETH-equivalent tokens.
 
-The dashboard labels this result as **priced assets** because it sums only
-native and ERC-20 balances for which Alchemy returns a USD price. It does not
-claim to include NFTs, DeFi positions, debt, related addresses, or unpriced
-tokens. Without Alchemy credentials, the backend falls back to its narrower
-Etherscan-based valuation. Very large token inventories may hit the configured
-page cap; those results are marked as partial. Quoted token values can also
-overstate realizable value for illiquid or unsolicited tokens.
+The dashboard labels this result as **estimated priced assets**. It does not
+include NFTs, DeFi positions, debt, related addresses, unpriced tokens, or
+token balances whose relevant transfers happened before the selected period.
+High-activity wallets may hit the 5,000-record token-transfer cap; those
+results are marked as partial.
 
 Before deploying, run:
 

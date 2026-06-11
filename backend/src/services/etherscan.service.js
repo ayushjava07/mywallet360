@@ -1,5 +1,4 @@
 import axios from "axios";
-import { getAlchemyPortfolio } from "./alchemy-portfolio.service.js";
 import { generateInsights } from "./insights.service.js";
 import { calculatePersonalityDetails, isSwapTransaction } from "./personality.service.js";
 import { calculateRiskScore } from "./scoring.service.js";
@@ -178,18 +177,27 @@ async function fetchPaginated(action, address, extra = {}) {
 async function getAnalysisPeriod(days) {
   const end = new Date();
   const start = new Date(end.getTime() - days * 86_400_000);
-  const startBlock = await etherscanRequest({
-    module: "block",
-    action: "getblocknobytime",
-    timestamp: Math.floor(start.getTime() / 1000),
-    closest: "after",
-  });
+  const [startBlock, endBlock] = await Promise.all([
+    etherscanRequest({
+      module: "block",
+      action: "getblocknobytime",
+      timestamp: Math.floor(start.getTime() / 1000),
+      closest: "after",
+    }),
+    etherscanRequest({
+      module: "block",
+      action: "getblocknobytime",
+      timestamp: Math.floor(end.getTime() / 1000),
+      closest: "before",
+    }),
+  ]);
 
   return {
     days,
     start: start.toISOString(),
     end: end.toISOString(),
     startBlock: Number(startBlock),
+    endBlock: Number(endBlock),
   };
 }
 
@@ -368,15 +376,6 @@ function buildLargestHolding(assets) {
     : null;
 }
 
-async function getPortfolio(address) {
-  try {
-    return await getAlchemyPortfolio(address);
-  } catch (error) {
-    console.warn(`Alchemy portfolio request failed for ${address}: ${error.message}`);
-    return null;
-  }
-}
-
 export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYSIS_DAYS) {
   const address = walletAddress.toLowerCase();
 
@@ -399,15 +398,13 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
       nftResult,
       balanceWei,
       priceResult,
-      alchemyPortfolio,
     ] = await Promise.all([
-      fetchPaginated("txlist", address, { startblock: period.startBlock }),
-      fetchPaginated("txlistinternal", address, { startblock: period.startBlock }),
-      fetchPaginated("tokentx", address, { startblock: period.startBlock }),
-      fetchPaginated("tokennfttx", address, { startblock: period.startBlock }),
+      fetchPaginated("txlist", address, { startblock: period.startBlock, endblock: period.endBlock }),
+      fetchPaginated("txlistinternal", address, { startblock: period.startBlock, endblock: period.endBlock }),
+      fetchPaginated("tokentx", address, { startblock: period.startBlock, endblock: period.endBlock }),
+      fetchPaginated("tokennfttx", address, { startblock: period.startBlock, endblock: period.endBlock }),
       etherscanRequest({ module: "account", action: "balance", address, tag: "latest" }),
       etherscanRequest({ module: "stats", action: "ethprice" }),
-      getPortfolio(address),
     ]);
 
     const ethPrice = Number(priceResult.ethusd || 0);
@@ -416,9 +413,8 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
     const internalTransactions = internalResult.records;
     const tokenTransfers = addDirection(tokenResult.records, address);
     const nftTransfers = addDirection(nftResult.records, address);
-    const fallbackAssets = buildAssets(tokenTransfers, ethBalance, ethPrice, address);
-    const assets = alchemyPortfolio?.assets || fallbackAssets;
-    const pricedAssets = alchemyPortfolio?.pricedAssets || fallbackAssets.filter((asset) => asset.priceAvailable);
+    const assets = buildAssets(tokenTransfers, ethBalance, ethPrice, address);
+    const pricedAssets = assets.filter((asset) => asset.priceAvailable);
     const nfts = buildNfts(nftTransfers, address);
     const protocolAnalysis = analyzeProtocols(normalTransactions);
     const moneyFlow = calculateMoneyFlow(normalTransactions, internalTransactions, address, ethPrice);
@@ -440,12 +436,12 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
       normalTransactions,
       protocolCounts: protocolAnalysis.counts,
     });
-    const netWorth = alchemyPortfolio?.netWorth
-      ?? round(pricedAssets.reduce((sum, asset) => sum + asset.usdValue, 0), 2);
+    const netWorth = round(pricedAssets.reduce((sum, asset) => sum + asset.usdValue, 0), 2);
     const analytics = {
       netWorth,
       nftCount: nfts.reduce((sum, nft) => sum + nft.amount, 0),
       transactionCount: normalTransactions.length,
+      transactionCountIsLowerBound: !normalResult.complete,
       largestHolding: buildLargestHolding(pricedAssets),
       moneyFlow,
       personality,
@@ -455,11 +451,11 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
       assets,
       topAssets: pricedAssets.slice(0, 10),
       valuation: {
-        source: alchemyPortfolio?.source || "etherscan-fallback",
-        networks: alchemyPortfolio?.networks || ["eth-mainnet"],
+        source: "etherscan",
+        networks: ["eth-mainnet"],
         pricedAssetCount: pricedAssets.length,
         totalAssetCount: assets.length,
-        complete: alchemyPortfolio?.complete ?? true,
+        complete: tokenResult.complete,
       },
       nfts,
       topNfts: nfts.slice(0, 10),
@@ -473,6 +469,8 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
         days: period.days,
         start: period.start,
         end: period.end,
+        startBlock: period.startBlock,
+        endBlock: period.endBlock,
       },
       analysisWindow: {
         maxRecordsPerCategory: PAGE_SIZE * MAX_PAGES,

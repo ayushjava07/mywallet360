@@ -4,14 +4,17 @@ function fallbackInsights(analytics) {
   const primaryPersonality = Object.entries(analytics.walletPersonality || analytics.personality).sort(
     (a, b) => b[1] - a[1],
   )[0];
+  const transactionDescription = analytics.transactionCountIsLowerBound
+    ? `at least ${analytics.transactionCount}`
+    : analytics.transactionCount;
 
   return {
-    summary: `This wallet has ${analytics.transactionCount} transactions in the last ${analytics.period.days} days and $${analytics.netWorth} in currently priced assets.`,
+    summary: `This wallet has ${transactionDescription} transactions in the last ${analytics.period.days} days and $${analytics.netWorth} in estimated priced assets.`,
     personalityExplanation: `${primaryPersonality?.[0] || "holder"} is the strongest observed behavior.`,
     riskExplanation: `Risk is ${analytics.riskScore.level.toLowerCase()} based on concentration, behavior, protocol diversity, and wallet age.`,
     insights: [
       `${analytics.moneyFlow.received} ETH received and ${analytics.moneyFlow.spent} ETH sent in the analyzed window.`,
-      `${analytics.assets.length} current token holdings were reconstructed from transfer activity.`,
+      `${analytics.assets.length} token holdings were estimated from transfers in the selected period.`,
       `${analytics.mostUsedProtocol.name} is the most frequently recognized protocol.`,
     ],
   };
@@ -32,13 +35,14 @@ export async function generateInsights(analytics) {
           {
             role: "system",
             content:
-              "Return JSON with summary, personalityExplanation, riskExplanation, and insights containing exactly 3 concise strings. Do not invent facts.",
+              "Return JSON with summary, personalityExplanation, riskExplanation, and insights containing exactly 3 concise strings. Treat transactionCount as a lower bound when transactionCountIsLowerBound is true. Do not invent facts.",
           },
           {
             role: "user",
             content: JSON.stringify({
               netWorth: analytics.netWorth,
               transactionCount: analytics.transactionCount,
+              transactionCountIsLowerBound: analytics.transactionCountIsLowerBound,
               period: analytics.period,
               moneyFlow: analytics.moneyFlow,
               personality: analytics.personality,
