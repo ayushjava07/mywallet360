@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT_MS = 20_000
+const DEFAULT_TIMEOUT_MS = 50_000
 
 export async function apiFetch(path, options = {}) {
   const timeoutMs = options.timeoutMs || DEFAULT_TIMEOUT_MS
