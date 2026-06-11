@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CalendarDays, Check, ChevronDown, TrendingUp } from 'lucide-react'
 import { metricIcons } from '../../config/dashboard'
-import { MetricExplainer } from '../common/MetricExplainer'
 
 export function BalanceCard({ balance, periods, selectedDays, pendingDays, isLoading, error, onPeriodChange }) {
   const menuRef = useRef(null)
@@ -92,21 +91,21 @@ export function BalanceCard({ balance, periods, selectedDays, pendingDays, isLoa
           d="M0 190 C45 175 65 184 102 158 S160 143 196 150 S250 123 286 132 S338 104 374 112 S421 81 460 91 S522 53 600 38"
         />
       </svg>
-      <MetricExplainer as="div" className="balance-card__main flex min-h-[225px] flex-col items-center justify-center text-center max-[700px]:min-h-[205px]" explanation={balance.explanation}>
+      <div className="balance-card__main flex min-h-[225px] flex-col items-center justify-center text-center max-[700px]:min-h-[205px]">
         <span className="eyebrow eyebrow--light">{balance.valuationLabel}</span>
         <h2>{balance.value}</h2>
         <span className="growth-pill"><TrendingUp aria-hidden="true" />{balance.rank} in {(selectedPeriod?.label || balance.growth).toLowerCase()}</span>
-      </MetricExplainer>
+      </div>
       <div className="balance-stats grid grid-cols-4 gap-[9px] max-[700px]:gap-[7px] max-[480px]:grid-cols-2 max-[480px]:gap-2">
         {balance.stats.map((stat) => {
           const StatIcon = metricIcons[stat.icon]
 
           return (
-            <MetricExplainer as="div" className="balance-stat grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-[3px] rounded-2xl p-[13px] max-[700px]:p-[9px] max-[480px]:p-[11px]" explanation={stat.explanation} key={stat.label}>
+            <div className="balance-stat grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-[3px] rounded-2xl p-[13px] max-[700px]:p-[9px] max-[480px]:p-[11px]" key={stat.label}>
               <span className="balance-stat__icon"><StatIcon aria-hidden="true" /></span>
               <span>{stat.label}</span>
               <strong>{stat.value}</strong>
-            </MetricExplainer>
+            </div>
           )
         })}
       </div>
