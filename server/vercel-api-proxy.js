@@ -3,6 +3,7 @@ import { Buffer } from "node:buffer";
 const BACKEND_ORIGIN = "https://mywallet360-backend.vercel.app";
 const FORWARDED_RESPONSE_HEADERS = [
   "cache-control",
+  "content-disposition",
   "content-type",
   "ratelimit",
   "ratelimit-policy",
@@ -20,7 +21,7 @@ export async function proxyApiRequest(req, res) {
   try {
     const response = await fetch(`${BACKEND_ORIGIN}${req.url}`, {
       headers: {
-        Accept: "application/json",
+        Accept: req.headers.accept || "*/*",
         ...(req.headers["x-forwarded-for"] ? { "x-forwarded-for": req.headers["x-forwarded-for"] } : {}),
         ...(req.headers["x-request-id"] ? { "x-request-id": req.headers["x-request-id"] } : {}),
       },

@@ -80,7 +80,13 @@ export default function App() {
               <WalletPersonality personality={wallet.personality} />
             </div>
             <Summary flow={wallet.flow} />
-            <Activity transactions={wallet.transactions} highlights={wallet.highlights} periodLabel={wallet.periodLabel} />
+            <Activity
+              walletAddress={wallet.id}
+              transactions={wallet.transactions}
+              highlights={wallet.highlights}
+              periodLabel={wallet.periodLabel}
+              reportRange={wallet.reportRange}
+            />
             <Insights insights={wallet.insights} />
           </main>
           <BottomNav />
