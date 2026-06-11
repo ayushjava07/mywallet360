@@ -60,8 +60,8 @@ Production uses two Vercel projects from this repository:
 - Backend project: `backend`
 
 The frontend keeps requests same-origin, for example
-`https://mywallet360.vercel.app/api/wallet/...`. The root `api/[...path].js`
-function forwards `/api/*` to `https://mywallet360-backend.vercel.app/api/*`.
+`https://mywallet360.vercel.app/api/wallet/...`. Explicit root API functions
+forward wallet and resolution requests to `https://mywallet360-backend.vercel.app`.
 
 Configure the backend Vercel project with:
 

@@ -10,7 +10,7 @@ const FORWARDED_RESPONSE_HEADERS = [
   "x-request-id",
 ];
 
-export default async function handler(req, res) {
+export async function proxyApiRequest(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     res.status(405).json({ code: "METHOD_NOT_ALLOWED", message: "Only GET requests are supported." });

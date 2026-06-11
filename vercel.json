@@ -1,6 +1,9 @@
 {
   "functions": {
-    "api/[...path].js": {
+    "api/wallet/[address].js": {
+      "maxDuration": 60
+    },
+    "api/resolve/[identifier].js": {
       "maxDuration": 60
     }
   },
