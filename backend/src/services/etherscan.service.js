@@ -199,6 +199,29 @@ async function getAnalysisPeriod(days) {
   };
 }
 
+async function getDateRange(from, to) {
+  const start = new Date(`${from}T00:00:00.000Z`);
+  const requestedEnd = new Date(`${to}T23:59:59.999Z`);
+  const includesCurrentDay = requestedEnd.getTime() >= Date.now();
+  const startBlockRequest = etherscanRequest({
+    module: "block",
+    action: "getblocknobytime",
+    timestamp: Math.floor(start.getTime() / 1000),
+    closest: "after",
+  });
+  const endBlockRequest = includesCurrentDay
+    ? Promise.resolve(99_999_999)
+    : etherscanRequest({
+      module: "block",
+      action: "getblocknobytime",
+      timestamp: Math.floor(requestedEnd.getTime() / 1000),
+      closest: "before",
+    });
+  const [startBlock, endBlock] = await Promise.all([startBlockRequest, endBlockRequest]);
+
+  return { start, end: requestedEnd, startBlock: Number(startBlock), endBlock: Number(endBlock) };
+}
+
 function addDirection(records, address) {
   return records.map((record) => ({
     ...record,
@@ -372,6 +395,68 @@ function buildLargestHolding(assets) {
         percentage: percentage(largest.usdValue, totalValue),
       }
     : null;
+}
+
+function exactTokenAmount(value, decimals) {
+  const negative = String(value).startsWith("-");
+  const digits = String(value || "0").replace(/^-/, "").padStart(decimals + 1, "0");
+  const whole = decimals ? digits.slice(0, -decimals) : digits;
+  const fraction = decimals ? digits.slice(-decimals).replace(/0+$/, "") : "";
+  return `${negative ? "-" : ""}${whole}${fraction ? `.${fraction}` : ""}`;
+}
+
+function reportTransaction(record, address, type) {
+  const isTokenTransfer = type === "ERC-20 transfer";
+  const decimals = isTokenTransfer ? Number(record.tokenDecimal || 0) : 18;
+
+  return {
+    date: new Date(Number(record.timeStamp) * 1000).toISOString().replace("T", " ").replace(".000Z", ""),
+    type,
+    direction: record.to?.toLowerCase() === address ? "receive" : "send",
+    asset: isTokenTransfer ? record.tokenSymbol || "UNKNOWN" : "ETH",
+    amount: exactTokenAmount(record.value || "0", decimals),
+    from: record.from || "",
+    to: record.to || "",
+    status: record.isError === "1" ? "failed" : "success",
+    blockNumber: Number(record.blockNumber || 0),
+    hash: record.hash || "",
+    timestamp: Number(record.timeStamp || 0),
+  };
+}
+
+export async function getTransactionReportData(walletAddress, from, to) {
+  const address = walletAddress.toLowerCase();
+
+  if (!/^0x[a-f0-9]{40}$/.test(address)) {
+    throw new Error("Invalid Ethereum wallet address");
+  }
+
+  const range = await getDateRange(from, to);
+  const query = { startblock: range.startBlock, endblock: range.endBlock };
+  const [normalResult, internalResult, tokenResult] = await Promise.all([
+    fetchPaginated("txlist", address, query),
+    fetchPaginated("txlistinternal", address, query),
+    fetchPaginated("tokentx", address, query),
+  ]);
+  const transactions = [
+    ...normalResult.records.map((record) => reportTransaction(record, address, "Normal transaction")),
+    ...internalResult.records.map((record) => reportTransaction(record, address, "Internal transaction")),
+    ...tokenResult.records.map((record) => reportTransaction(record, address, "ERC-20 transfer")),
+  ].sort((first, second) => second.timestamp - first.timestamp)
+    .map((transaction) => {
+      const reportRow = { ...transaction };
+      delete reportRow.timestamp;
+      return reportRow;
+    });
+
+  return {
+    address,
+    from,
+    to,
+    generatedAt: new Date().toISOString(),
+    complete: normalResult.complete && internalResult.complete && tokenResult.complete,
+    transactions,
+  };
 }
 
 export function buildPublicWalletData(analytics) {

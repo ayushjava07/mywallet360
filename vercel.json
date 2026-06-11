@@ -5,6 +5,9 @@
     },
     "api/resolve/[identifier].js": {
       "maxDuration": 60
+    },
+    "api/report/[address].js": {
+      "maxDuration": 60
     }
   },
   "headers": [

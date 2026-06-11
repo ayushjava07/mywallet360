@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { CalendarRange, Download, FileSpreadsheet } from 'lucide-react'
 import { highlightIcons } from '../../config/dashboard'
+import { walletService } from '../../services/walletService'
 import { Icon } from '../common/Icon'
 
 function Transaction({ item }) {
@@ -42,12 +44,75 @@ function Highlight({ highlight }) {
   )
 }
 
-export function Activity({ transactions, highlights, periodLabel }) {
+export function Activity({ walletAddress, transactions, highlights, periodLabel, reportRange }) {
+  const today = new Date()
+  const maxReportDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   const [showAll, setShowAll] = useState(false)
+  const [from, setFrom] = useState(reportRange.from)
+  const [to, setTo] = useState(reportRange.to)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [reportError, setReportError] = useState('')
   const visibleTransactions = showAll ? transactions : transactions.slice(0, 3)
+
+  useEffect(() => {
+    setFrom(reportRange.from)
+    setTo(reportRange.to)
+    setReportError('')
+  }, [reportRange.from, reportRange.to])
+
+  const downloadReport = async (event) => {
+    event.preventDefault()
+    setReportError('')
+
+    if (!from || !to || from > to || to > maxReportDate) {
+      setReportError('Choose a valid start and end date.')
+      return
+    }
+
+    setIsDownloading(true)
+    try {
+      await walletService.downloadTransactionReport(walletAddress, from, to)
+    } catch (error) {
+      setReportError(error.message)
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   return (
     <section className="activity min-[900px]:px-0.5">
+      <form className="report-download" onSubmit={downloadReport}>
+        <div className="report-download__intro">
+          <span className="report-download__icon"><FileSpreadsheet aria-hidden="true" /></span>
+          <div>
+            <span className="report-download__eyebrow">Excel statement</span>
+            <strong>Download transaction report</strong>
+            <p>Get a clean statement plus raw Etherscan data for your selected date range.</p>
+            <div className="report-download__tags" aria-label="Included transaction types">
+              <span>Normal</span><span>Internal</span><span>ERC-20</span>
+            </div>
+          </div>
+        </div>
+        <div className="report-download__controls">
+          <div className="report-download__range">
+            <span className="report-download__range-icon"><CalendarRange aria-hidden="true" /></span>
+            <label>
+              <span>From</span>
+              <input type="date" value={from} max={to || maxReportDate} onChange={(event) => setFrom(event.target.value)} />
+            </label>
+            <i aria-hidden="true" />
+            <label>
+              <span>To</span>
+              <input type="date" value={to} min={from} max={maxReportDate} onChange={(event) => setTo(event.target.value)} />
+            </label>
+          </div>
+          <button className="report-download__button" type="submit" disabled={isDownloading}>
+            <Download aria-hidden="true" />
+            <span>{isDownloading ? 'Creating report...' : 'Download Report'}</span>
+          </button>
+          {reportError && <span className="report-download__error" role="alert">{reportError}</span>}
+        </div>
+      </form>
       <div className="activity-layout grid grid-cols-[minmax(0,1.65fr)_minmax(300px,.9fr)] items-stretch gap-[18px] max-[1050px]:grid-cols-[minmax(0,1.35fr)_minmax(270px,.85fr)] max-[1050px]:gap-[14px] max-[899px]:grid-cols-1">
         <div className="card activity-feed rounded-3xl border-0 p-[22px] max-[1050px]:p-[18px] max-[480px]:rounded-[20px] max-[480px]:p-3.5">
           <div className="activity-card__heading flex min-h-[35px] items-center justify-between gap-4">
