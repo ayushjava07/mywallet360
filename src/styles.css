@@ -327,15 +327,21 @@ h1, h2, h3 { color: var(--ink); font-weight: 800; letter-spacing: -.035em; }
 .balance-card { background: radial-gradient(circle at 50% 43%, rgba(255,255,255,.18), transparent 25%), radial-gradient(circle at 96% 100%, rgba(4,91,89,.42), transparent 38%), linear-gradient(145deg, #47d9d1 0%, #16bdb8 48%, #087f80 118%); box-shadow: 0 24px 55px rgba(23,146,142,.22), inset 0 1px 0 rgba(255,255,255,.46); }
 .balance-card::before { content: ""; position: absolute; z-index: -1; inset: 0; opacity: .24; background-image: radial-gradient(circle, rgba(255,255,255,.38) .7px, transparent .8px); background-size: 18px 18px; mask-image: linear-gradient(125deg, #000, transparent 52%); pointer-events: none; }
 .balance-card::after { content: ""; position: absolute; z-index: -1; width: 300px; height: 230px; top: -150px; right: -80px; border-radius: 50%; background: rgba(255,255,255,.16); filter: blur(2px); transform: rotate(-18deg); pointer-events: none; }
-.balance-card > :not(.balance-sparkline, .balance-card__glass) { position: relative; z-index: 2; }
+.balance-card > :not(.balance-card__glass) { position: relative; z-index: 2; }
 .balance-card__glass { position: absolute; z-index: 1; top: -72px; right: -44px; width: 250px; height: 170px; border-radius: 50%; background: linear-gradient(150deg, rgba(255,255,255,.28), rgba(255,255,255,0) 68%); transform: rotate(-17deg); pointer-events: none; }
 .balance-rank-chip { color: #fff; background: rgba(3,105,103,.22); box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 8px 22px rgba(1,83,81,.08); backdrop-filter: blur(16px); }
 .balance-rank-chip svg { width: 13px; height: 13px; }
-.balance-sparkline { position: absolute; z-index: 0; inset: 90px -8% auto; width: 116%; height: 48%; opacity: .6; filter: drop-shadow(0 4px 10px rgba(255,255,255,.2)); animation: financial-wave 8s ease-in-out infinite alternate; pointer-events: none; }
-.balance-sparkline__line { fill: none; stroke: url(#sparklineStroke); stroke-width: 2; vector-effect: non-scaling-stroke; }
-.balance-sparkline__fill { fill: url(#sparklineFill); }
 .eyebrow--light { color: rgba(255,255,255,.74); }
-.balance-card__main h2 { margin: 14px 0 15px; color: #fff; font-size: clamp(54px, 6vw, 72px); line-height: .95; letter-spacing: -.075em; text-shadow: 0 10px 35px rgba(0,79,78,.25), 0 0 42px rgba(255,255,255,.2); }
+.balance-card__main h2 { margin: 11px 0 12px; color: #fff; font-size: clamp(48px, 5.4vw, 66px); line-height: .95; letter-spacing: -.075em; text-shadow: 0 10px 35px rgba(0,79,78,.25), 0 0 42px rgba(255,255,255,.2); }
+.balance-chart { width: 100%; height: 142px; margin-top: 13px; padding: 10px 7px 2px; border: 1px solid rgba(255,255,255,.14); border-radius: 18px; background: linear-gradient(180deg, rgba(4,104,102,.15), rgba(4,104,102,.04)); box-shadow: inset 0 1px 0 rgba(255,255,255,.12); backdrop-filter: blur(10px); }
+.balance-chart__heading { height: 19px; padding: 0 7px; display: flex; align-items: center; justify-content: space-between; text-align: left; pointer-events: none; }
+.balance-chart__heading span { color: #fff; font-size: 8px; font-weight: 850; text-transform: uppercase; letter-spacing: .1em; }
+.balance-chart__heading small { padding: 3px 6px; border-radius: 999px; color: rgba(255,255,255,.72); background: rgba(255,255,255,.1); font-size: 6px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.balance-chart .recharts-responsive-container { height: calc(100% - 19px) !important; }
+.balance-chart__tooltip { min-width: 132px; padding: 9px 10px; display: grid; gap: 2px; border: 1px solid rgba(255,255,255,.22); border-radius: 12px; color: #fff; text-align: left; background: rgba(3,83,82,.94); box-shadow: 0 12px 30px rgba(0,67,66,.24), inset 0 1px 0 rgba(255,255,255,.16); backdrop-filter: blur(16px); }
+.balance-chart__tooltip span { color: rgba(255,255,255,.66); font-size: 7px; font-weight: 750; text-transform: uppercase; letter-spacing: .07em; }
+.balance-chart__tooltip strong { font-size: 14px; letter-spacing: -.025em; }
+.balance-chart__tooltip small { color: rgba(255,255,255,.58); font-size: 7px; }
 .growth-pill { display: flex; align-items: center; gap: 7px; padding: 8px 13px; border: 0; border-radius: 999px; color: #fff; background: rgba(4,104,102,.24); box-shadow: inset 0 1px 0 rgba(255,255,255,.24); backdrop-filter: blur(16px); font-size: 10px; font-weight: 750; }
 .growth-pill svg { width: 14px; height: 14px; stroke-width: 2.2; }
 .balance-stat { background: rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 8px 22px rgba(1,83,81,.08); backdrop-filter: blur(18px) saturate(120%); }
@@ -367,8 +373,6 @@ h1, h2, h3 { color: var(--ink); font-weight: 800; letter-spacing: -.035em; }
 .score-bar__meter i { display: block; width: 92%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3bc7a2, #238b70); box-shadow: 0 0 12px rgba(35,139,112,.22); }
 .score-bar__value { color: #167f66; font-size: 25px; line-height: 1; letter-spacing: -.06em; }
 .score-bar__value small { color: #41927d; font-size: 9px; letter-spacing: normal; }
-@keyframes financial-wave { from { transform: translate3d(-1.5%, 2px, 0); } to { transform: translate3d(1.5%, -4px, 0); } }
-@media (prefers-reduced-motion: reduce) { .balance-sparkline { animation: none; } }
 @media (prefers-reduced-motion: reduce) {
   main.dashboard-ready, .dashboard-loader span { animation: none; }
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0s; }
@@ -762,8 +766,8 @@ html[data-theme="dark"] .bottom-nav button.active > span .icon { filter: brightn
   .ai-card__lead { padding-right: 18px; }
   .ai-card__lead p { font-size: 18px; }
   .identity-grid { @apply mt-[18px] grid-cols-2 gap-2.5; }
-  .balance-card { min-height: 390px; padding: 24px; }
-  .balance-card__main { min-height: 205px; }
+  .balance-card { min-height: 450px; padding: 24px; }
+  .balance-card__main { min-height: 270px; }
   .balance-stats { gap: 7px; }
   .balance-stat { padding: 9px; }
   .flow-grid, .transaction-list { @apply grid-cols-1; }
@@ -817,7 +821,7 @@ html[data-theme="dark"] .bottom-nav button.active > span .icon { filter: brightn
   .ai-card__lead { padding: 0 0 16px; border-right: 0; border-bottom: 1px solid var(--line); }
   .ai-card__lead p { margin-top: 15px; }
   .ai-insight--highlighted::after { display: none; }
-  .balance-card { min-height: 430px; padding: 18px; gap: 18px; }
+  .balance-card { min-height: 480px; padding: 18px; gap: 18px; }
   .balance-rank-chip { top: 15px; right: 15px; padding: 7px 10px; }
   .balance-card__main h2 { font-size: 43px; }
   .balance-stats { @apply grid-cols-2 gap-2; }

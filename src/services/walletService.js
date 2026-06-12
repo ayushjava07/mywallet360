@@ -45,6 +45,17 @@ const formatNumber = (value, maximumFractionDigits = 4) => new Intl.NumberFormat
 
 const explanation = (title, summary, formula, details = []) => ({ title, summary, formula, details })
 
+function buildFallbackValuationHistory(netWorth, period) {
+  const start = period?.start?.slice(0, 10)
+  const end = period?.end?.slice(0, 10)
+  if (!start || !end) return []
+
+  const value = Number(netWorth || 0)
+  return start === end
+    ? [{ date: end, value }]
+    : [{ date: start, value }, { date: end, value }]
+}
+
 const formatRelativeTime = (timestamp) => {
   const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000))
 
@@ -142,6 +153,9 @@ function buildWallet(address, analytics) {
   const transactionCount = formatCount(analytics.transactionCount, analytics.analysisWindow?.normalTransactionsComplete)
   const portfolioScore = Math.min(99, Math.round(50 + Math.log10(analytics.netWorth + 1) * 12))
   const largestHolding = analytics.largestHolding
+  const valuationHistory = analytics.valuationHistory?.length
+    ? analytics.valuationHistory
+    : buildFallbackValuationHistory(analytics.netWorth, analytics.period)
 
   return {
     id: address.toLowerCase(),
@@ -159,6 +173,10 @@ function buildWallet(address, analytics) {
     },
     balance: {
       value: formatUsd(analytics.netWorth),
+      history: valuationHistory.map((point) => ({
+        ...point,
+        formattedValue: formatUsd(point.value),
+      })),
       valuationLabel: `Etherscan estimated priced assets${analytics.valuation.complete === false ? ' (partial)' : ''}`,
       growth: periodLabel,
       rank: `${transactionCount} txns`,

@@ -424,6 +424,78 @@ function reportTransaction(record, address, type) {
   };
 }
 
+function transactionValueDelta(transaction, address, ethPrice) {
+  if (transaction.isError === "1") return 0;
+
+  const value = fromWei(transaction.value) * ethPrice;
+  const received = transaction.to?.toLowerCase() === address ? value : 0;
+  const sent = transaction.from?.toLowerCase() === address ? value : 0;
+  return received - sent;
+}
+
+function tokenValueDelta(transfer, address, ethPrice) {
+  if (transfer.isError === "1") return 0;
+
+  const contractAddress = transfer.contractAddress?.toLowerCase();
+  const price = USD_PEGGED_TOKEN_ADDRESSES.has(contractAddress)
+    ? 1
+    : ETH_EQUIVALENT_TOKEN_ADDRESSES.has(contractAddress)
+      ? ethPrice
+      : 0;
+  if (!price) return 0;
+
+  const value = tokenAmount(transfer.value || "0", Number(transfer.tokenDecimal || 0)) * price;
+  const received = transfer.to?.toLowerCase() === address ? value : 0;
+  const sent = transfer.from?.toLowerCase() === address ? value : 0;
+  return received - sent;
+}
+
+export function buildValuationHistory({
+  address,
+  currentValue,
+  ethPrice,
+  normalTransactions,
+  internalTransactions,
+  tokenTransfers,
+  period,
+}) {
+  const dailyDeltas = new Map();
+  const addDelta = (timestamp, delta) => {
+    if (!delta) return;
+    const date = new Date(Number(timestamp) * 1000).toISOString().slice(0, 10);
+    dailyDeltas.set(date, (dailyDeltas.get(date) || 0) + delta);
+  };
+
+  [...normalTransactions, ...internalTransactions].forEach((transaction) => {
+    addDelta(transaction.timeStamp, transactionValueDelta(transaction, address, ethPrice));
+  });
+  tokenTransfers.forEach((transfer) => {
+    addDelta(transfer.timeStamp, tokenValueDelta(transfer, address, ethPrice));
+  });
+
+  const start = new Date(period.start);
+  const end = new Date(period.end);
+  const dates = [];
+  for (const date = new Date(start); date <= end; date.setUTCDate(date.getUTCDate() + 1)) {
+    dates.push(date.toISOString().slice(0, 10));
+  }
+
+  let value = currentValue;
+  const history = [];
+  for (let index = dates.length - 1; index >= 0; index -= 1) {
+    const date = dates[index];
+    history.push({ date, value: round(Math.max(0, value), 2) });
+    value -= dailyDeltas.get(date) || 0;
+  }
+
+  const chronological = history.reverse();
+  const maxPoints = 32;
+  if (chronological.length <= maxPoints) return chronological;
+
+  const step = (chronological.length - 1) / (maxPoints - 1);
+  return Array.from({ length: maxPoints }, (_, index) => chronological[Math.round(index * step)]);
+}
+
 export async function getTransactionReportData(walletAddress, from, to) {
   const address = walletAddress.toLowerCase();
 
@@ -471,6 +543,7 @@ export function buildPublicWalletData(analytics) {
     personality: analytics.personality,
     personalityFactors: analytics.personalityFactors,
     timeline: analytics.timeline,
+    valuationHistory: analytics.valuationHistory,
     valuation: analytics.valuation,
     mostUsedProtocol: {
       name: analytics.mostUsedProtocol.name,
@@ -544,6 +617,15 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
       protocolCounts: protocolAnalysis.counts,
     });
     const netWorth = round(pricedAssets.reduce((sum, asset) => sum + asset.usdValue, 0), 2);
+    const valuationHistory = buildValuationHistory({
+      address,
+      currentValue: netWorth,
+      ethPrice,
+      normalTransactions,
+      internalTransactions,
+      tokenTransfers,
+      period,
+    });
     const analytics = {
       netWorth,
       assetCount: assets.length,
@@ -555,6 +637,7 @@ export async function getWalletData(walletAddress, analysisDays = DEFAULT_ANALYS
       personality,
       personalityFactors: personalityDetails.factors,
       timeline: buildTimeline(normalTransactions, address),
+      valuationHistory,
       valuation: {
         source: "etherscan",
         networks: ["eth-mainnet"],
