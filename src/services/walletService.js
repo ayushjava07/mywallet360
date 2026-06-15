@@ -156,6 +156,30 @@ function buildWallet(address, analytics) {
     ? analytics.valuationHistory
     : buildFallbackValuationHistory(analytics.netWorth, analytics.period)
 
+  const riskExplanation = explanation(
+    'Risk Level Heuristic',
+    'Evaluates wallet risk based on asset concentration, transaction failure rates, and protocol diversity.',
+    'Risk score = 100 − concentration × 0.45 − failure rate × 0.35 + diversity',
+    [
+      `Risk Thresholds: Low (75–100) | Moderate (50–74) | High (0–49).`,
+      `Concentration: ${analytics.riskScore.factors?.holdingConcentration || 0}% weight on the largest asset.`,
+      `Failed transactions: ${analytics.riskScore.factors?.failedTransactionRate || 0}% error rate.`,
+      `Protocol diversity: ${analytics.riskScore.factors?.protocolDiversity || 0} recognized protocols used.`,
+    ],
+  )
+
+  const protocolExplanation = explanation(
+    analytics.mostUsedProtocol.type === 'contract' ? 'Most Used Contract' : 'Most Used Protocol',
+    'Attributes contract interactions to known protocols or contract addresses in a multi-tier hierarchy.',
+    'Resolution: Internal DB → Verified names → Shortened Address → Other',
+    [
+      'If a contract is unrecognized, it falls back to its shortened address.',
+      'Other includes all non-contract transactions and failed calls.',
+      `Recognized interactions: ${analytics.mostUsedProtocol.recognizedCount?.toLocaleString() || '0'}`,
+      `Unrecognized interactions: ${analytics.mostUsedProtocol.unrecognizedCount?.toLocaleString() || '0'}`,
+    ],
+  )
+
   return {
     id: address.toLowerCase(),
     analysisDays: analytics.period.id === 'ytd' ? 'ytd' : analytics.period.days,
@@ -220,33 +244,14 @@ function buildWallet(address, analytics) {
           value: analytics.riskScore.level,
           detail: `${analytics.riskScore.score}/100 heuristic score`,
           icon: 'nft',
-          explanation: explanation(
-            'Risk Level Heuristic',
-            'Evaluates wallet risk based on asset concentration, transaction failure rates, and protocol diversity.',
-            'Risk score = 100 − concentration × 0.45 − failure rate × 0.35 + diversity',
-            [
-              `Concentration: ${analytics.riskScore.factors?.holdingConcentration || 0}% weight on the largest asset.`,
-              `Failed transactions: ${analytics.riskScore.factors?.failedTransactionRate || 0}% error rate.`,
-              `Protocol diversity: ${analytics.riskScore.factors?.protocolDiversity || 0} recognized protocols used.`,
-            ],
-          ),
+          explanation: riskExplanation,
         },
         {
           label: analytics.mostUsedProtocol.type === 'contract' ? 'Most Used Contract' : 'Most Used Protocol',
           value: analytics.mostUsedProtocol.name,
           detail: `${analytics.mostUsedProtocol.interactionCount.toLocaleString()} interactions`,
           icon: 'defi',
-          explanation: explanation(
-            analytics.mostUsedProtocol.type === 'contract' ? 'Most Used Contract' : 'Most Used Protocol',
-            'Attributes contract interactions to known protocols or contract addresses in a multi-tier hierarchy.',
-            'Resolution: Internal DB → Verified names → Shortened Address → Other',
-            [
-              'If a contract is unrecognized, it falls back to its shortened address.',
-              'Other includes all non-contract transactions and failed calls.',
-              `Recognized interactions: ${analytics.mostUsedProtocol.recognizedCount?.toLocaleString() || '0'}`,
-              `Unrecognized interactions: ${analytics.mostUsedProtocol.unrecognizedCount?.toLocaleString() || '0'}`,
-            ],
-          ),
+          explanation: protocolExplanation,
         },
         {
           label: 'Discovered Assets',
@@ -294,8 +299,8 @@ function buildWallet(address, analytics) {
       { label: 'Transactions', value: transactionCount, detail: periodLabel.toLowerCase(), icon: 'transactions', tone: 'green' },
     ],
     insights: [
-      { label: 'Risk Level', value: analytics.riskScore.level, suffix: `${analytics.riskScore.score}/100` },
-      { label: 'Recognized Protocol', value: analytics.mostUsedProtocol.name, suffix: `${analytics.mostUsedProtocol.interactionCount} interactions` },
+      { label: 'Risk Level', value: analytics.riskScore.level, suffix: `${analytics.riskScore.score}/100`, explanation: riskExplanation },
+      { label: 'Recognized Protocol', value: analytics.mostUsedProtocol.name, suffix: `${analytics.mostUsedProtocol.interactionCount} interactions`, explanation: protocolExplanation },
     ],
   }
 }

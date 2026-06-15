@@ -66,7 +66,11 @@ export function BalanceCard({ balance, periods, selectedDays, pendingDays, isLoa
             : <ChevronDown className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} aria-hidden="true" />}
         </button>
         {isMenuOpen && (
-          <div className="absolute top-[calc(100%+8px)] right-0 grid w-[230px] gap-1 rounded-2xl border border-white/20 bg-[rgba(7,91,90,.96)] p-1.5 shadow-[0_18px_45px_rgba(0,60,59,.28)] backdrop-blur-xl" role="menu">
+          <div
+            className="absolute right-0 grid w-[230px] gap-1 rounded-2xl border border-white/20 bg-[rgba(7,91,90,.96)] p-1.5 shadow-[0_18px_45px_rgba(0,60,59,.28)] backdrop-blur-xl"
+            style={{ top: 'calc(100% + 8px)' }}
+            role="menu"
+          >
             {periods.map((period) => (
               <button
                 className={`grid cursor-pointer grid-cols-[34px_1fr_auto] items-center gap-2 rounded-xl border-0 px-2.5 py-2 text-left text-white transition ${selectedDays === period.value ? 'bg-white/16' : 'bg-transparent hover:bg-white/10'}`}
