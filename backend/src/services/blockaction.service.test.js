@@ -49,7 +49,14 @@ test("wallet API response excludes large internal collections", () => {
     timeline: [],
     valuationHistory: [{ date: "2026-06-01", value: 12 }],
     valuation: { totalAssetCount: 2 },
-    mostUsedProtocol: { name: "Other", interactionCount: 1, counts: { Other: 1 } },
+    mostUsedProtocol: {
+      name: "Other",
+      interactionCount: 1,
+      type: "protocol",
+      recognizedCount: 0,
+      unrecognizedCount: 1,
+      counts: { Other: 1 }
+    },
     riskScore: {},
     period: { id: "30d", days: 30 },
     analysisWindow: {},
@@ -57,6 +64,9 @@ test("wallet API response excludes large internal collections", () => {
 
   assert.equal(response.assetCount, 2);
   assert.equal(response.mostUsedProtocol.name, "Other");
+  assert.equal(response.mostUsedProtocol.type, "protocol");
+  assert.equal(response.mostUsedProtocol.recognizedCount, 0);
+  assert.equal(response.mostUsedProtocol.unrecognizedCount, 1);
   assert.deepEqual(response.valuationHistory, [{ date: "2026-06-01", value: 12 }]);
   assert.equal(typeof response.generatedAt, "string");
   assert.equal("assets" in response, false);

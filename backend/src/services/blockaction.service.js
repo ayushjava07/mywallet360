@@ -1,6 +1,7 @@
 import axios from "axios";
 import { calculatePersonalityDetails, isSwapTransaction } from "./personality.service.js";
 import { calculateRiskScore } from "./scoring.service.js";
+import { resolveProtocol, resolveProtocolSync } from "./protocol-resolution.service.js";
 import {
   fromWei,
   normalizePercentages,
@@ -90,7 +91,7 @@ function setCached(key, value) {
   return value;
 }
 
-async function blockActionRequest(params) {
+export async function blockActionRequest(params) {
   if (!BLOCKACTION_URL) {
     throw new Error("BLOCKACTION_API_URL is not configured");
   }
@@ -357,22 +358,99 @@ function buildNfts(nftTransfers, address) {
   return [...holdings.values()].slice(0, 100);
 }
 
-function analyzeProtocols(transactions) {
-  const counts = Object.fromEntries([...Object.keys(PROTOCOL_ADDRESSES), "Other"].map((name) => [name, 0]));
+export async function analyzeProtocols(transactions) {
+  const startTime = Date.now();
+  console.log(`[Protocol Analysis] Starting protocol analysis`);
 
-  transactions.forEach((transaction) => {
-    if (!transaction.to || transaction.isError === "1" || transaction.input === "0x") return;
-    const target = transaction.to.toLowerCase();
-    const protocol = Object.entries(PROTOCOL_ADDRESSES).find(([, addresses]) => addresses.has(target))?.[0];
-    counts[protocol || "Other"] += 1;
-  });
+  const contractInteractions = transactions.filter(
+    (t) => t.to && t.isError !== "1" && t.input !== "0x"
+  );
 
-  if (!Object.values(counts).some((count) => count > 0)) {
-    return { name: "Other", count: 0, counts };
+  const defaultCounts = Object.fromEntries(
+    [...Object.keys(PROTOCOL_ADDRESSES), "Other"].map((name) => [name, 0])
+  );
+
+  if (contractInteractions.length === 0) {
+    const endTime = Date.now();
+    console.log(`[Protocol Analysis] Completed in ${endTime - startTime}ms (0 interactions)`);
+    return {
+      name: "Other",
+      count: 0,
+      type: "protocol",
+      recognizedCount: 0,
+      unrecognizedCount: 0,
+      counts: defaultCounts,
+    };
   }
 
-  const [name, count] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-  return { name, count, counts };
+  // Count interaction frequencies per contract address
+  const addressCounts = {};
+  contractInteractions.forEach((t) => {
+    const addr = t.to.toLowerCase();
+    addressCounts[addr] = (addressCounts[addr] || 0) + 1;
+  });
+
+  // Sort unique addresses by interaction frequency descending
+  const sortedAddresses = Object.keys(addressCounts).sort(
+    (a, b) => addressCounts[b] - addressCounts[a]
+  );
+
+  // Define Top N (only resolve the most active 5 contracts asynchronously)
+  const TOP_N = 5;
+  const topNAddresses = sortedAddresses.slice(0, TOP_N);
+  const remainingAddresses = sortedAddresses.slice(TOP_N);
+
+  // Resolve top N asynchronously in parallel
+  const topResolvedList = await Promise.all(
+    topNAddresses.map(async (addr) => {
+      const resolved = await resolveProtocol(addr);
+      return [addr, resolved];
+    })
+  );
+
+  // Resolve remaining contract addresses synchronously (loads cache or falls back to shortened address)
+  const remainingResolvedList = remainingAddresses.map((addr) => {
+    const resolved = resolveProtocolSync(addr);
+    return [addr, resolved];
+  });
+
+  const resolutionMap = new Map([...topResolvedList, ...remainingResolvedList]);
+
+  const counts = { ...defaultCounts };
+  const types = { Other: "protocol" };
+
+  let recognizedCount = 0;
+  let unrecognizedCount = 0;
+
+  contractInteractions.forEach((transaction) => {
+    const target = transaction.to.toLowerCase();
+    const resolved = resolutionMap.get(target) || { name: "Other", type: "protocol" };
+
+    if (resolved.type === "protocol") {
+      recognizedCount += 1;
+    } else {
+      unrecognizedCount += 1;
+    }
+
+    counts[resolved.name] = (counts[resolved.name] || 0) + 1;
+    types[resolved.name] = resolved.type;
+  });
+
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const [name, count] = sorted[0];
+  const type = types[name] || "protocol";
+
+  const endTime = Date.now();
+  console.log(`[Protocol Analysis] Completed in ${endTime - startTime}ms (Top ${topNAddresses.length} resolved asynchronously, ${remainingAddresses.length} resolved synchronously)`);
+
+  return {
+    name,
+    count,
+    type,
+    recognizedCount,
+    unrecognizedCount,
+    counts,
+  };
 }
 
 function buildTimeline(transactions, address) {
@@ -562,6 +640,9 @@ export function buildPublicWalletData(analytics) {
     mostUsedProtocol: {
       name: analytics.mostUsedProtocol.name,
       interactionCount: analytics.mostUsedProtocol.interactionCount,
+      type: analytics.mostUsedProtocol.type,
+      recognizedCount: analytics.mostUsedProtocol.recognizedCount,
+      unrecognizedCount: analytics.mostUsedProtocol.unrecognizedCount,
     },
     riskScore: analytics.riskScore,
     period: analytics.period,
@@ -611,7 +692,7 @@ export async function getWalletData(walletAddress, analysisPeriod = DEFAULT_ANAL
     const assets = buildAssets(tokenTransfers, ethBalance, ethPrice, address);
     const pricedAssets = assets.filter((asset) => asset.priceAvailable);
     const nfts = buildNfts(nftTransfers, address);
-    const protocolAnalysis = analyzeProtocols(normalTransactions);
+    const protocolAnalysis = await analyzeProtocols(normalTransactions);
     const moneyFlow = calculateMoneyFlow(normalTransactions, internalTransactions, address, ethPrice);
     const personalityDetails = calculatePersonalityDetails({
       normalTransactions,
@@ -666,6 +747,9 @@ export async function getWalletData(walletAddress, analysisPeriod = DEFAULT_ANAL
       mostUsedProtocol: {
         name: protocolAnalysis.name,
         interactionCount: protocolAnalysis.count,
+        type: protocolAnalysis.type,
+        recognizedCount: protocolAnalysis.recognizedCount,
+        unrecognizedCount: protocolAnalysis.unrecognizedCount,
         counts: protocolAnalysis.counts,
       },
       riskScore,

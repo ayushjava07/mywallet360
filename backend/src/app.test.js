@@ -1,6 +1,7 @@
 import "dotenv/config";
 import assert from "node:assert/strict";
 import test from "node:test";
+import axios from "axios";
 import app from "./app.js";
 
 async function withServer(run) {
@@ -102,3 +103,58 @@ test("returns a consistent response for unknown endpoints", async () => {
     assert.equal(typeof body.requestId, "string");
   });
 });
+
+test("wallet profile API endpoint returns accurate protocol counts and types", async () => {
+  const originalGet = axios.get;
+
+  axios.get = async (url, options) => {
+    const params = options?.params || {};
+    const module = params.module;
+    const action = params.action;
+
+    if (module === "account" && action === "balance") {
+      return { data: { status: "1", message: "OK", result: "1000000000000000000" } };
+    }
+    if (module === "account" && action === "txlist") {
+      return { data: { status: "1", message: "OK", result: [
+        { to: "0x5555555555555555555555555555555555555555", from: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", isError: "0", input: "0x12345678", hash: "0x1", timeStamp: "1718000000", value: "0" },
+        { to: "0x5555555555555555555555555555555555555555", from: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", isError: "0", input: "0x12345679", hash: "0x1b", timeStamp: "1718000001", value: "0" },
+        { to: "0x6666666666666666666666666666666666666666", from: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", isError: "0", input: "0xabcdef", hash: "0x2", timeStamp: "1718000002", value: "0" }
+      ] } };
+    }
+    if (module === "account" && (action === "txlistinternal" || action === "tokentx" || action === "tokennfttx")) {
+      return { data: { status: "1", message: "OK", result: [] } };
+    }
+    if (module === "contract" && action === "getsourcecode") {
+      if (params.address === "0x5555555555555555555555555555555555555555") {
+        return { data: { status: "1", message: "OK", result: [{ ContractName: "MockProtocolA" }] } };
+      }
+      return { data: { status: "1", message: "OK", result: [] } };
+    }
+    if (url.includes("openchain.xyz")) {
+      throw new Error("OpenChain simulation error");
+    }
+    if (url.includes("alchemy.com") || url.includes("etherscan")) {
+      return { data: { result: [] } };
+    }
+    throw new Error(`Unhandled mock request for ${url}`);
+  };
+
+  try {
+    await withServer(async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/wallet/0x742d35Cc6634C0532925a3b844Bc454e4438f44e?period=ytd`);
+      assert.equal(response.status, 200);
+      const body = await response.json();
+
+      assert.ok(body.mostUsedProtocol);
+      assert.equal(body.mostUsedProtocol.name, "MockProtocolA");
+      assert.equal(body.mostUsedProtocol.interactionCount, 2);
+      assert.equal(body.mostUsedProtocol.type, "protocol");
+      assert.equal(body.mostUsedProtocol.recognizedCount, 2);
+      assert.equal(body.mostUsedProtocol.unrecognizedCount, 1);
+    });
+  } finally {
+    axios.get = originalGet;
+  }
+});
+
