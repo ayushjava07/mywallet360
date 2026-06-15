@@ -91,8 +91,8 @@ function addStatementSheet(workbook, report) {
   sheet.getCell("B2").font = { size: 11, color: { argb: COLORS.muted } };
   sheet.mergeCells("B3:E3");
   sheet.getCell("B3").value = report.complete
-    ? "Source: Etherscan | Scan completed"
-    : "Source: Etherscan | Partial report: pagination limit reached";
+    ? "Source: BlockAction (BlobLens) | Scan completed"
+    : "Source: BlockAction (BlobLens) | Partial report: pagination limit reached";
   sheet.getCell("B3").font = { size: 9, italic: true, color: { argb: report.complete ? COLORS.muted : COLORS.debit } };
   sheet.getRow(1).height = 28;
   sheet.getRow(2).height = 20;

@@ -1,5 +1,6 @@
 import { Sparkles } from 'lucide-react'
 import { portfolioIcons } from '../../config/dashboard'
+import { MetricExplainer } from '../common/MetricExplainer'
 
 export function PortfolioCard({ portfolio }) {
   return (
@@ -13,22 +14,28 @@ export function PortfolioCard({ portfolio }) {
           const MetricIcon = portfolioIcons[metric.icon]
 
           return (
-            <article
+            <MetricExplainer
+              as="article"
               className={`portfolio-metric relative grid min-h-28 min-w-0 grid-cols-[minmax(0,1fr)_auto] content-end gap-[5px] rounded-[18px] p-[14px] max-[700px]:min-h-28${metric.primary ? ' portfolio-metric--primary' : ''}`}
+              explanation={metric.explanation}
               key={metric.label}
             >
               <span className="portfolio-metric__icon"><MetricIcon aria-hidden="true" /></span>
               <span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.detail}</small>
-            </article>
+            </MetricExplainer>
           )
         })}
       </div>
-      <div className="score-bar relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-[11px] gap-y-2.5 rounded-[18px] p-[15px]">
+      <MetricExplainer
+        as="div"
+        className="score-bar relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-[11px] gap-y-2.5 rounded-[18px] p-[15px]"
+        explanation={portfolio.scoreExplanation}
+      >
         <span className="score-bar__icon"><Sparkles aria-hidden="true" /></span>
         <div className="score-bar__copy"><span>Portfolio Score</span><strong>Excellent</strong></div>
         <strong className="score-bar__value">{portfolio.score}<small>/100</small></strong>
         <div className="score-bar__meter" aria-hidden="true"><i style={{ width: `${portfolio.score}%` }} /></div>
-      </div>
+      </MetricExplainer>
     </section>
   )
 }

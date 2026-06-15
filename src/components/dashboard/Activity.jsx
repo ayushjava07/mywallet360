@@ -46,7 +46,7 @@ function Highlight({ highlight }) {
 
 export function Activity({ walletAddress, transactions, highlights, periodLabel, reportRange }) {
   const today = new Date()
-  const maxReportDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const maxReportDate = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`
   const [showAll, setShowAll] = useState(false)
   const [from, setFrom] = useState(reportRange.from)
   const [to, setTo] = useState(reportRange.to)
@@ -87,7 +87,7 @@ export function Activity({ walletAddress, transactions, highlights, periodLabel,
           <div>
             <span className="report-download__eyebrow">Excel statement</span>
             <strong>Download transaction report</strong>
-            <p>Get a clean statement plus raw Etherscan data for your selected date range.</p>
+            <p>Get a clean statement plus raw BlockAction data for your selected date range.</p>
             <div className="report-download__tags" aria-label="Included transaction types">
               <span>Normal</span><span>Internal</span><span>ERC-20</span>
             </div>

@@ -3,34 +3,33 @@ import { formatCount } from '../utils/formatCount.js'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 export const ANALYSIS_PERIODS = [
-  { days: 1, label: 'Last day', shortLabel: '1D', description: 'Today’s activity' },
-  { days: 7, label: 'Last week', shortLabel: '7D', description: 'Recent activity' },
-  { days: 30, label: 'Last 30 days', shortLabel: '30D', description: 'Monthly overview' },
-  { days: 365, label: 'Last year', shortLabel: '1Y', description: 'Long-term activity' },
+  { value: 'ytd', id: 'ytd', label: 'Year to date', shortLabel: 'YTD', description: 'Activity since January 1' },
+  { value: 1, id: '1d', label: 'Last day', shortLabel: '1D', description: 'Today’s activity' },
+  { value: 7, id: '7d', label: 'Last week', shortLabel: '7D', description: 'Recent activity' },
+  { value: 30, id: '30d', label: 'Last 30 days', shortLabel: '30D', description: 'Monthly overview' },
+  { value: 365, id: '365d', label: 'Last year', shortLabel: '1Y', description: 'Long-term activity' },
 ]
 const DEFAULT_AVATAR = 'cebc058af93e566c96200932c258f395cbf87ebd.png'
+const VITALIK_ADDRESS = '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
+const compactAddress = (address) => `${address.slice(0, 6)}...${address.slice(-4)}`
 const EXAMPLE_WALLETS = [
   {
-    name: 'Active wallet sample',
-    type: 'Public Ethereum address',
-    description: 'A useful example for exploring everyday wallet activity and on-chain behavior.',
-    address: '0xbf03a2440bf80f7726ba5f60f0ac260ccad82a0b',
+    name: 'vitalik.eth',
+    label: 'vitalik.eth',
+    type: 'ENS name',
+    description: 'Resolve the ENS name first, then analyze its public Ethereum activity.',
+    identifier: 'vitalik.eth',
+    address: VITALIK_ADDRESS,
   },
   {
-    name: 'Public wallet sample',
-    type: 'Well-known address',
-    description: 'A public address with a rich transaction history for exploring wallet analytics.',
-    address: '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
-  },
-  {
-    name: 'High-activity sample',
-    type: 'Frequent transactions',
-    description: 'A useful example for seeing how a wallet with frequent transfers is summarized.',
-    address: '0x28c6c06298d514db089934071355e5743bf21d60',
+    name: 'vitalik.eth resolved address',
+    label: compactAddress(VITALIK_ADDRESS),
+    type: 'Resolved Ethereum address',
+    description: 'Analyze the same wallet directly using the address resolved from vitalik.eth.',
+    identifier: VITALIK_ADDRESS,
+    address: VITALIK_ADDRESS,
   },
 ]
-
-const compactAddress = (address) => `${address.slice(0, 6)}...${address.slice(-4)}`
 
 const formatUsd = (value) => new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -44,6 +43,17 @@ const formatNumber = (value, maximumFractionDigits = 4) => new Intl.NumberFormat
 }).format(Number(value || 0))
 
 const explanation = (title, summary, formula, details = []) => ({ title, summary, formula, details })
+
+function buildFallbackValuationHistory(netWorth, period) {
+  const start = period?.start?.slice(0, 10)
+  const end = period?.end?.slice(0, 10)
+  if (!start || !end) return []
+
+  const value = Number(netWorth || 0)
+  return start === end
+    ? [{ date: end, value }]
+    : [{ date: start, value }, { date: end, value }]
+}
 
 const formatRelativeTime = (timestamp) => {
   const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000))
@@ -102,7 +112,7 @@ function buildTransactions(timeline) {
 }
 
 function buildWallet(address, analytics) {
-  const periodLabel = ANALYSIS_PERIODS.find((period) => period.days === analytics.period.days)?.label
+  const periodLabel = ANALYSIS_PERIODS.find((period) => period.id === analytics.period.id)?.label
     || `Last ${analytics.period.days} days`
   const factors = analytics.personalityFactors || {}
   const personalityExplanations = {
@@ -142,10 +152,37 @@ function buildWallet(address, analytics) {
   const transactionCount = formatCount(analytics.transactionCount, analytics.analysisWindow?.normalTransactionsComplete)
   const portfolioScore = Math.min(99, Math.round(50 + Math.log10(analytics.netWorth + 1) * 12))
   const largestHolding = analytics.largestHolding
+  const valuationHistory = analytics.valuationHistory?.length
+    ? analytics.valuationHistory
+    : buildFallbackValuationHistory(analytics.netWorth, analytics.period)
+
+  const riskExplanation = explanation(
+    'Risk Level Heuristic',
+    'Evaluates wallet risk based on asset concentration, transaction failure rates, and protocol diversity.',
+    'Risk score = 100 − concentration × 0.45 − failure rate × 0.35 + diversity',
+    [
+      `Risk Thresholds: Low (75–100) | Moderate (50–74) | High (0–49).`,
+      `Concentration: ${analytics.riskScore.factors?.holdingConcentration || 0}% weight on the largest asset.`,
+      `Failed transactions: ${analytics.riskScore.factors?.failedTransactionRate || 0}% error rate.`,
+      `Protocol diversity: ${analytics.riskScore.factors?.protocolDiversity || 0} recognized protocols used.`,
+    ],
+  )
+
+  const protocolExplanation = explanation(
+    analytics.mostUsedProtocol.type === 'contract' ? 'Most Used Contract' : 'Most Used Protocol',
+    'Attributes contract interactions to known protocols or contract addresses in a multi-tier hierarchy.',
+    'Resolution: Internal DB → Verified names → Shortened Address → Other',
+    [
+      'If a contract is unrecognized, it falls back to its shortened address.',
+      'Other includes all non-contract transactions and failed calls.',
+      `Recognized interactions: ${analytics.mostUsedProtocol.recognizedCount?.toLocaleString() || '0'}`,
+      `Unrecognized interactions: ${analytics.mostUsedProtocol.unrecognizedCount?.toLocaleString() || '0'}`,
+    ],
+  )
 
   return {
     id: address.toLowerCase(),
-    analysisDays: analytics.period.days,
+    analysisDays: analytics.period.id === 'ytd' ? 'ytd' : analytics.period.days,
     periodLabel,
     reportRange: {
       from: analytics.period.start.slice(0, 10),
@@ -159,16 +196,20 @@ function buildWallet(address, analytics) {
     },
     balance: {
       value: formatUsd(analytics.netWorth),
-      valuationLabel: `Etherscan estimated priced assets${analytics.valuation.complete === false ? ' (partial)' : ''}`,
+      history: valuationHistory.map((point) => ({
+        ...point,
+        formattedValue: formatUsd(point.value),
+      })),
+      valuationLabel: `BlockAction estimated priced assets${analytics.valuation.complete === false ? ' (partial)' : ''}`,
       growth: periodLabel,
       rank: `${transactionCount} txns`,
       explanation: explanation(
         'How period-estimated assets are calculated',
-        'This sums ETH and supported token balances estimated from Etherscan data for the selected period.',
+        'This sums ETH and supported token balances estimated from BlockAction data for the selected period.',
         'Estimated priced assets = Σ(estimated token balance × supported USD price)',
         [
           `${analytics.valuation?.pricedAssetCount || 0} of ${analytics.valuation?.totalAssetCount || 0} discovered assets had prices.`,
-          'Source: Etherscan balances, prices, and transfer history.',
+          'Source: BlockAction (BlobLens) balances, prices, and transfer history.',
           analytics.valuation?.complete === false ? 'Token-transfer history hit the page cap, so this estimate is partial.' : 'Token-transfer pagination completed for the selected period.',
         ],
       ),
@@ -176,7 +217,13 @@ function buildWallet(address, analytics) {
         { label: 'Transactions', value: transactionCount, icon: 'rank' },
         { label: 'Activity', value: activityLevel, icon: 'activity', explanation: explanation('Activity level', 'A simple label based on transaction count in the selected period.', 'Very High: >500 · High: >100 · Moderate: ≤100', [`This wallet has ${transactionCount} transactions in the selected period.`]) },
         { label: 'NFT Activity', value: analytics.personalityFactors?.nftTransfers?.toLocaleString() || '0', icon: 'risk' },
-        { label: 'Network', value: 'Ethereum', icon: 'network' },
+        {
+          label: 'Network',
+          value: analytics.valuation?.networks?.length
+            ? analytics.valuation.networks.map((network) => network === 'eth-mainnet' ? 'Ethereum' : network).join(', ')
+            : 'None',
+          icon: 'network',
+        },
       ],
     },
     portfolio: {
@@ -192,16 +239,42 @@ function buildWallet(address, analytics) {
           primary: true,
           explanation: explanation('Largest priced holding', 'The priced asset with the highest calculated USD value in this estimate.', 'Largest holding = max(balance × USD price)', [`It represents ${largestHolding?.percentage || 0}% of the selected period estimate.`]),
         },
-        { label: 'Risk Level', value: analytics.riskScore.level, detail: `${analytics.riskScore.score}/100 heuristic score`, icon: 'nft' },
-        { label: 'Most Used Protocol', value: analytics.mostUsedProtocol.name, detail: `${analytics.mostUsedProtocol.interactionCount} recognized interactions`, icon: 'defi' },
-        { label: 'Discovered Assets', value: Number(analytics.assetCount ?? analytics.valuation?.totalAssetCount ?? 0).toLocaleString(), detail: analytics.valuation.complete ? 'Transfer scan completed' : 'Partial transfer scan', icon: 'collection' },
+        {
+          label: 'Risk Level',
+          value: analytics.riskScore.level,
+          detail: `${analytics.riskScore.score}/100 heuristic score`,
+          icon: 'nft',
+          explanation: riskExplanation,
+        },
+        {
+          label: analytics.mostUsedProtocol.type === 'contract' ? 'Most Used Contract' : 'Most Used Protocol',
+          value: analytics.mostUsedProtocol.name,
+          detail: `${analytics.mostUsedProtocol.interactionCount.toLocaleString()} interactions`,
+          icon: 'defi',
+          explanation: protocolExplanation,
+        },
+        {
+          label: 'Discovered Assets',
+          value: Number(analytics.assetCount ?? analytics.valuation?.totalAssetCount ?? 0).toLocaleString(),
+          detail: analytics.valuation.complete ? 'Transfer scan completed' : 'Partial transfer scan',
+          icon: 'collection',
+          explanation: explanation(
+            'Discovered Assets',
+            'The total number of unique ERC-20 and ERC-721 tokens identified in the wallet\'s history.',
+            'Discovered assets = unique token contracts with transfer history',
+            [
+              'Scans incoming and outgoing token transfers for the selected period.',
+              analytics.valuation.complete ? 'Full transfer scan was completed.' : 'Partial scan (hit the page cap).',
+            ],
+          ),
+        },
       ],
     },
     identity: [
       { label: 'Portfolio Score', value: `${portfolioScore}/100`, description: 'Based on the selected period asset estimate', icon: 'portfolio', tone: 'gold' },
       { label: 'Transactions', value: transactionCount, description: `Activity during ${periodLabel.toLowerCase()}`, icon: 'risk', tone: 'blue' },
       { label: 'NFT Activity', value: analytics.personalityFactors?.nftTransfers?.toLocaleString() || '0', description: `Transfers during ${periodLabel.toLowerCase()}`, icon: 'age', tone: 'purple' },
-      { label: 'Data Source', value: 'Etherscan', description: analytics.valuation.complete ? 'Transfer scan completed' : 'Partial transfer scan', icon: 'kyc', tone: 'green' },
+      { label: 'Data Source', value: 'BlockAction', description: analytics.valuation.complete ? 'Transfer scan completed' : 'Partial transfer scan', icon: 'kyc', tone: 'green' },
     ],
     personality: {
       title: primaryPersonality?.label || 'New Wallet',
@@ -226,27 +299,29 @@ function buildWallet(address, analytics) {
       { label: 'Transactions', value: transactionCount, detail: periodLabel.toLowerCase(), icon: 'transactions', tone: 'green' },
     ],
     insights: [
-      { label: 'Risk Level', value: analytics.riskScore.level, suffix: `${analytics.riskScore.score}/100` },
-      { label: 'Recognized Protocol', value: analytics.mostUsedProtocol.name, suffix: `${analytics.mostUsedProtocol.interactionCount} interactions` },
+      { label: 'Risk Level', value: analytics.riskScore.level, suffix: `${analytics.riskScore.score}/100`, explanation: riskExplanation },
+      { label: 'Recognized Protocol', value: analytics.mostUsedProtocol.name, suffix: `${analytics.mostUsedProtocol.interactionCount} interactions`, explanation: protocolExplanation },
     ],
   }
 }
 
-async function getWalletByAddress(address, days = 30) {
+async function getWalletByAddress(address, analysisPeriod = 'ytd') {
   const normalizedAddress = address.trim()
 
   if (!/^0x[a-fA-F0-9]{40}$/.test(normalizedAddress)) {
     throw new Error('Enter a valid Ethereum wallet address.')
   }
 
-  const response = await apiFetch(`${API_BASE_URL}/api/wallet/${normalizedAddress}?days=${days}`)
+  const query = analysisPeriod === 'ytd' ? 'period=ytd' : `days=${analysisPeriod}`
+  const response = await apiFetch(`${API_BASE_URL}/api/wallet/${normalizedAddress}?${query}`)
   const data = await response.json().catch(() => null)
 
   if (!response.ok) {
     throw new Error(data?.message || 'Unable to fetch wallet analytics.')
   }
 
-  if (data?.period?.days !== days) {
+  const expectedPeriodId = analysisPeriod === 'ytd' ? 'ytd' : `${analysisPeriod}d`
+  if (data?.period?.id !== expectedPeriodId) {
     throw new Error('The API returned stale period data. Restart or deploy the latest backend.')
   }
 

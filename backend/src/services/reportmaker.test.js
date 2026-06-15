@@ -27,6 +27,7 @@ test("creates a statement-style Excel report with raw exact amounts", async () =
   await workbook.xlsx.load(buffer);
 
   assert.equal(workbook.getWorksheet("Transaction Statement").getCell("B1").value, "Transaction Statement for 0x742d35...38f44e");
+  assert.equal(workbook.getWorksheet("Transaction Statement").getCell("B3").value, "Source: BlockAction (BlobLens) | Scan completed");
   assert.equal(workbook.getWorksheet("Transaction Statement").getCell("D6").value, "CREDIT");
   assert.equal(workbook.getWorksheet("Transaction Statement").getCell("E6").value, "+123456789012345678.123456 USDC");
   assert.equal(workbook.getWorksheet("Raw Data").getCell("E2").value, "123456789012345678.123456");

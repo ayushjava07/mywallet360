@@ -1,6 +1,6 @@
 import { isAddress } from "ethers";
 import { HttpError } from "../middleware/error.middleware.js";
-import { getTransactionReportData } from "../services/etherscan.service.js";
+import { getTransactionReportData } from "../services/blockaction.service.js";
 import { createTransactionWorkbook } from "../services/reportmaker.js";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

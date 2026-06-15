@@ -5,3 +5,4 @@ import { validateProductionConfig } from "./src/config.js";
 validateProductionConfig();
 
 export default app;
+

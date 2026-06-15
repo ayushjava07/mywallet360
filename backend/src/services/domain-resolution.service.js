@@ -42,7 +42,7 @@ const getDomainType = (input) => {
 
 const getEnsProvider = () => {
   if (!ensProvider) {
-    const rpcUrl = process.env.ETHEREUM_RPC_URL || "https://ethereum-rpc.publicnode.com";
+    const rpcUrl = process.env.ETHEREUM_RPC_URL ;
     ensProvider = new JsonRpcProvider(rpcUrl, "mainnet");
   }
 

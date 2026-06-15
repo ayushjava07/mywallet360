@@ -22,7 +22,7 @@ export async function proxyApiRequest(req, res) {
     const response = await fetch(`${BACKEND_ORIGIN}${req.url}`, {
       headers: {
         Accept: req.headers.accept || "*/*",
-        ...(req.headers["x-forwarded-for"] ? { "x-forwarded-for": req.headers["x-forwarded-for"] } : {}),
+        "x-forwarded-for": req.headers["x-real-ip"] || req.socket.remoteAddress || "",
         ...(req.headers["x-request-id"] ? { "x-request-id": req.headers["x-request-id"] } : {}),
       },
       signal: AbortSignal.timeout(55_000),
