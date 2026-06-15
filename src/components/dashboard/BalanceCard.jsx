@@ -63,7 +63,7 @@ export function BalanceCard({ balance, periods, selectedDays, pendingDays, isLoa
           </span>
           {isLoading
             ? <span className="size-3 animate-spin rounded-full border border-white/40 border-t-white" aria-label="Updating dashboard" />
-            : <ChevronDown className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} aria-hidden="true`} />}
+            : <ChevronDown className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} aria-hidden="true" />}
         </button>
         {isMenuOpen && (
           <div className="absolute top-[calc(100%+8px)] right-0 grid w-[230px] gap-1 rounded-2xl border border-white/20 bg-[rgba(7,91,90,.96)] p-1.5 shadow-[0_18px_45px_rgba(0,60,59,.28)] backdrop-blur-xl" role="menu">
