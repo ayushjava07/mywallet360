@@ -27,15 +27,15 @@ logged, or exposed outside the machine that runs the service.
 Required backend variables:
 
 - `NODE_ENV=production`
-- `ETHERSCAN_API_KEY`
+- `BLOCKACTION_API_URL`
 - `FRONTEND_URL` containing the allowed frontend origin or comma-separated origins
 
 Optional integrations and tuning are documented in `backend/.env.example`.
 
-The dashboard uses Etherscan only. ETH balance and price come from Etherscan,
-while ERC-20 balances are estimated from transfers during the selected
-analysis period. USD values are available only for ETH, a small hardcoded list
-of USD-pegged tokens, and ETH-equivalent tokens.
+The dashboard uses the in-house BlockAction (BlobLens) API. ETH balance and
+price come from BlockAction, while ERC-20 balances are estimated from transfers
+during the selected analysis period. USD values are available only for ETH, a
+small hardcoded list of USD-pegged tokens, and ETH-equivalent tokens.
 
 The dashboard labels this result as **estimated priced assets**. It does not
 include NFTs, DeFi positions, debt, related addresses, unpriced tokens, or
@@ -75,7 +75,7 @@ Vercel uses `backend/api/index.js` as the serverless Express entrypoint. Add
 the required variables from `backend/.env.example` to the backend project:
 
 - `NODE_ENV=production`
-- `ETHERSCAN_API_KEY`
+- `BLOCKACTION_API_URL`
 - `FRONTEND_URL=https://mywallet360.vercel.app`
 
 Do not set `VITE_API_URL` for the standard deployment. The frontend API proxy
@@ -94,9 +94,10 @@ npm run preview
 Wallet search accepts Ethereum addresses and ENS `.eth` names. ENS names are
 resolved before the existing wallet analytics request runs.
 
-Wallet analytics can be requested for 1, 7, 30, or 365 days using the
-dashboard period selector or the API query parameter:
+Wallet analytics defaults to year-to-date and can also be requested for 1, 7,
+30, or 365 days using the dashboard period selector or API query parameters:
 
 ```text
+GET /api/wallet/:address?period=ytd
 GET /api/wallet/:address?days=7
 ```

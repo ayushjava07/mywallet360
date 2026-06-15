@@ -3,7 +3,7 @@ import { walletService } from '../services/walletService'
 import { resolveWalletIdentifier } from '../utils/resolveWalletIdentifier'
 
 export function useWalletDashboard() {
-  const [analysisDays, setAnalysisDays] = useState(30)
+  const [analysisDays, setAnalysisDays] = useState('ytd')
   const [wallet, setWallet] = useState(null)
   const [searchValue, setSearchValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -59,9 +59,9 @@ export function useWalletDashboard() {
     setError('')
     setResolvedIdentifier(null)
   }
-  const selectExampleWallet = (address) => {
-    setSearchValue(address)
-    analyzeWallet(address)
+  const selectExampleWallet = (identifier) => {
+    setSearchValue(identifier)
+    analyzeWallet(identifier)
   }
   const selectAnalysisPeriod = (days) => {
     if (!wallet || isLoadingRef.current) return

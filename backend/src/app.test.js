@@ -1,3 +1,4 @@
+import "dotenv/config";
 import assert from "node:assert/strict";
 import test from "node:test";
 import app from "./app.js";
@@ -44,6 +45,50 @@ test("rejects unsupported analysis periods before calling upstream services", as
 
     assert.equal(response.status, 400);
     assert.equal(body.code, "INVALID_ANALYSIS_PERIOD");
+  });
+});
+
+test("accepts YTD as the default analysis period before calling upstream services", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/wallet/0x742d35Cc6634C0532925a3b844Bc454e4438f44e`);
+    const body = await response.json();
+
+    assert.notEqual(response.status, 400);
+    assert.notEqual(body.code, "INVALID_ANALYSIS_PERIOD");
+  });
+});
+
+test("rejects invalid transaction report dates before calling upstream services", async () => {
+  await withServer(async (baseUrl) => {
+    const address = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
+    const response = await fetch(`${baseUrl}/api/report/${address}?from=2026-06-11&to=2026-06-01`);
+    const body = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(body.code, "INVALID_REPORT_DATES");
+  });
+});
+
+test("limits transaction reports to one year", async () => {
+  await withServer(async (baseUrl) => {
+    const address = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
+    const response = await fetch(`${baseUrl}/api/report/${address}?from=2024-01-01&to=2026-01-01`);
+    const body = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(body.code, "REPORT_RANGE_TOO_LARGE");
+  });
+});
+
+test("rejects future transaction report dates", async () => {
+  await withServer(async (baseUrl) => {
+    const address = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
+    const future = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
+    const response = await fetch(`${baseUrl}/api/report/${address}?from=2026-01-01&to=${future}`);
+    const body = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(body.code, "FUTURE_REPORT_DATE");
   });
 });
 

@@ -4,6 +4,7 @@ import { config } from "./config.js";
 import { errorHandler, HttpError, notFound, requestContext } from "./middleware/error.middleware.js";
 import { securityHeaders } from "./middleware/security.middleware.js";
 import resolutionRoutes from "./routes/resolution.routes.js";
+import reportRoutes from "./routes/report.routes.js";
 import walletRoutes from "./routes/wallet.routes.js";
 
 const app = express();
@@ -35,6 +36,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api/wallet", walletRoutes);
 app.use("/api/resolve", resolutionRoutes);
+app.use("/api/report", reportRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

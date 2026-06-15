@@ -27,7 +27,7 @@ export function validateProductionConfig() {
 
   const missing = [];
 
-  if (!process.env.ETHERSCAN_API_KEY) missing.push("ETHERSCAN_API_KEY");
+  if (!process.env.BLOCKACTION_API_URL) missing.push("BLOCKACTION_API_URL");
   if (!config.frontendOrigins.length) missing.push("FRONTEND_URL");
 
   if (missing.length) {

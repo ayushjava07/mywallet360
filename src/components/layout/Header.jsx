@@ -159,19 +159,19 @@ export function Header({
           <span>Try an example</span>
           <div>
             {exampleWallets.map((exampleWallet) => {
-              const previewId = `wallet-preview-${exampleWallet.address.slice(-4)}`
+              const previewId = `wallet-preview-${exampleWallet.identifier.replace(/[^a-z0-9]/gi, '-')}`
 
               return (
-                <div className="example-wallet" key={exampleWallet.address}>
+                <div className="example-wallet" key={exampleWallet.identifier}>
                   <button
                     className={wallet?.id === exampleWallet.address ? 'active' : ''}
                     disabled={isSearchBusy}
                     type="button"
-                    onClick={() => onSelectExampleWallet(exampleWallet.address)}
-                    aria-label={`Analyze ${exampleWallet.name}, ${exampleWallet.address}`}
+                    onClick={() => onSelectExampleWallet(exampleWallet.identifier)}
+                    aria-label={`Analyze ${exampleWallet.name}, ${exampleWallet.identifier}`}
                     aria-describedby={wallet ? undefined : previewId}
                   >
-                    {compactAddress(exampleWallet.address)}
+                    {exampleWallet.label}
                   </button>
                   {!wallet && (
                     <aside className="example-wallet-preview" id={previewId} role="tooltip">
