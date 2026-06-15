@@ -4,7 +4,40 @@ export const blockActionRequestWrapper = {
   request: blockActionRequest,
 };
 
-const protocolCache = new Map();
+class BoundedCache {
+  constructor(maxSize = 1000) {
+    this.maxSize = maxSize;
+    this.map = new Map();
+  }
+
+  has(key) {
+    return this.map.has(key);
+  }
+
+  get(key) {
+    if (!this.map.has(key)) return undefined;
+    const val = this.map.get(key);
+    this.map.delete(key);
+    this.map.set(key, val);
+    return val;
+  }
+
+  set(key, value) {
+    if (this.map.has(key)) {
+      this.map.delete(key);
+    } else if (this.map.size >= this.maxSize) {
+      const oldestKey = this.map.keys().next().value;
+      this.map.delete(oldestKey);
+    }
+    this.map.set(key, value);
+  }
+
+  clear() {
+    this.map.clear();
+  }
+}
+
+const protocolCache = new BoundedCache(1000);
 
 // 1. Internal protocol mapping database
 const INTERNAL_PROTOCOL_MAPPING = {
@@ -58,8 +91,10 @@ export async function resolveProtocol(contractAddress) {
 
   if (protocolCache.has(address)) {
     const cached = protocolCache.get(address);
-    console.log(`[Resolver Cache Hit] Address: ${address}, Result:`, cached);
-    return cached;
+    if (cached && cached.type !== "contract") {
+      console.log(`[Resolver Cache Hit] Address: ${address}, Result:`, cached);
+      return cached;
+    }
   }
 
   // Helper to cache and return

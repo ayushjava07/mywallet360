@@ -164,7 +164,7 @@ export function Header({
               return (
                 <div className="example-wallet" key={exampleWallet.identifier}>
                   <button
-                    className={wallet?.id === exampleWallet.address ? 'active' : ''}
+                    className={wallet && resolvedIdentifier?.originalInput === exampleWallet.identifier ? 'active' : ''}
                     disabled={isSearchBusy}
                     type="button"
                     onClick={() => onSelectExampleWallet(exampleWallet.identifier)}

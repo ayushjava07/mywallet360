@@ -28,6 +28,7 @@ export function validateProductionConfig() {
   const missing = [];
 
   if (!process.env.BLOCKACTION_API_URL) missing.push("BLOCKACTION_API_URL");
+  if (!process.env.ETHEREUM_RPC_URL) missing.push("ETHEREUM_RPC_URL");
   if (!config.frontendOrigins.length) missing.push("FRONTEND_URL");
 
   if (missing.length) {

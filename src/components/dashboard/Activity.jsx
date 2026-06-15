@@ -46,7 +46,7 @@ function Highlight({ highlight }) {
 
 export function Activity({ walletAddress, transactions, highlights, periodLabel, reportRange }) {
   const today = new Date()
-  const maxReportDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const maxReportDate = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`
   const [showAll, setShowAll] = useState(false)
   const [from, setFrom] = useState(reportRange.from)
   const [to, setTo] = useState(reportRange.to)
