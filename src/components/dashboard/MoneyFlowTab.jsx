@@ -1,4 +1,7 @@
 import { MaterialIcon } from '../common/MaterialIcon'
+import { Icon } from '../common/Icon'
+import { MetricExplainer } from '../common/MetricExplainer'
+import { highlightIcons } from '../../config/dashboard'
 
 function formatPeriod(periodLabel) {
   const d = new Date()
@@ -16,19 +19,6 @@ function currencySymbol(flow) {
   return match || 'USD'
 }
 
-const TX_CONFIG = {
-  Receive: { icon: 'call_received', color: 'text-emerald-500', bg: 'bg-emerald-500/10', badge: 'Received' },
-  Send: { icon: 'call_made', color: 'text-rose-500', bg: 'bg-rose-500/10', badge: 'Sent' },
-}
-
-function getTxConfig(tx) {
-  const title = tx.displayTitle || ''
-  if (title === 'Token Swap') return { icon: 'swap_horiz', color: 'text-violet-500', bg: 'bg-violet-500/10', badge: 'Swapped' }
-  if (title === 'Contract Interaction') return { icon: 'smart_toggle', color: 'text-orange-500', bg: 'bg-orange-500/10', badge: 'Confirmed' }
-  if (title === 'Stake') return { icon: 'lock', color: 'text-blue-500', bg: 'bg-blue-500/10', badge: 'Staked' }
-  return tx.positive ? TX_CONFIG.Receive : TX_CONFIG.Send
-}
-
 function getDateGroup(meta) {
   const m = meta.toLowerCase()
   if (m === 'just now' || m.includes('minute') || m.includes('hour')) return 'Today'
@@ -41,7 +31,7 @@ function getDateGroup(meta) {
 }
 
 export function MoneyFlowTab({ wallet }) {
-  const { balance, flow, portfolio, transactions } = wallet
+  const { balance, flow, portfolio, transactions, highlights = [] } = wallet
   const portfolioMetrics = portfolio.metrics || []
   const score = portfolio.score || 0
   const dashArray = `${Math.min(score, 100)} ${100 - Math.min(score, 100)}`
@@ -56,7 +46,8 @@ export function MoneyFlowTab({ wallet }) {
     return 'Your spending exceeded income this period. Review your expenses.'
   })()
 
-  const topAsset = portfolioMetrics.find((m) => m.label === 'Largest Holding')?.value || 'ETH'
+  const largestHoldingMetric = portfolioMetrics.find((m) => m.label === 'Largest Holding')
+  const topAsset = largestHoldingMetric?.value || 'ETH'
   const activityStat = balance.stats?.find((s) => s.label === 'Activity')
   const activityLevel = activityStat?.value || (score > 70 ? 'Highly Active' : score > 40 ? 'Active' : 'Moderate')
   const txnStat = balance.stats?.find((s) => s.label === 'Transactions')
@@ -103,7 +94,6 @@ export function MoneyFlowTab({ wallet }) {
   const scoreLabel = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : score >= 20 ? 'Limited' : 'Minimal'
   const strongCount = signals.filter(s => s.strength === 'Strong').length
   const attentionCount = signals.filter(s => s.strength === 'Needs Attention').length
-
   const strengthRank = { Strong: 4, Moderate: 3, Low: 2, Developing: 1, 'Needs Attention': 0 }
   const strongest = signals.reduce((best, s) => strengthRank[s.strength] > strengthRank[best.strength] ? s : best)
   const weakest = signals.reduce((best, s) => strengthRank[s.strength] < strengthRank[best.strength] ? s : best)
@@ -151,7 +141,21 @@ export function MoneyFlowTab({ wallet }) {
           <MaterialIcon icon="auto_awesome" fill className="text-teal-400 shrink-0 text-lg max-[480px]:text-base" />
           <p className="text-sm max-[480px]:text-xs font-semibold text-teal-900">{tip}</p>
         </div>
-        <div className="apple-card p-[25px] max-[480px]:p-5">
+        <MetricExplainer
+          as="div"
+          className="apple-card p-[25px] max-[480px]:p-5"
+          explanation={{
+            title: 'Money Flow',
+            summary: 'Tracks all ETH movement in and out of your wallet during the selected period. Net Growth shows whether you received more than you spent.',
+            formula: 'Net Growth = Total Received ETH − Total Spent ETH',
+            details: [
+              'Received: Total value of all incoming ETH transfers to your wallet.',
+              'Spent: Total value of all outgoing ETH transfers including contract interactions.',
+              'Positive Net Growth means you received more than you spent.',
+              'Values are in ETH based on raw on-chain transaction data from BlockAction.',
+            ],
+          }}
+        >
           <div className="flex justify-between items-center mb-5 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-2">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 opacity-70">Money Flow</span>
             <span className="px-3 py-1 bg-teal-400/10 text-teal-400 text-[10px] font-bold rounded-full">{formatPeriod(flow.periodLabel)}</span>
@@ -172,42 +176,73 @@ export function MoneyFlowTab({ wallet }) {
               <p className="text-2xl font-bold text-rose-500">{flow.spent.value}</p>
             </div>
           </div>
-        </div>
+        </MetricExplainer>
       </div>
 
       {/* Portfolio Snapshot */}
-      <section className="apple-card p-[22px] bg-slate-900 text-white relative overflow-hidden border-none shadow-2xl max-[480px]:p-[18px]">
-        <div className="absolute -right-16 -top-16 w-52 h-52 bg-teal-400/20 rounded-full blur-[70px] pointer-events-none" />
-        <div className="absolute -left-16 -bottom-16 w-40 h-40 bg-teal-400/10 rounded-full blur-[50px] pointer-events-none" />
-        <div className="relative z-10">
-          <div className="flex justify-between items-start mb-4 max-[480px]:flex-col max-[480px]:gap-3">
+      <MetricExplainer
+        as="section"
+        className="apple-card p-[22px] max-[480px]:p-[18px]"
+          explanation={{
+            title: 'Portfolio Snapshot',
+            summary: 'Your wallet\'s estimated total value across all priced assets, paired with a health score based on portfolio size.',
+            formula: 'Estimated Value = Σ(estimated token balance × supported USD price) for all priced assets',
+            details: [
+              `Current estimate: ${balance.value}`,
+              'Combines ETH and supported token balances estimated from on-chain BlockAction data.',
+              'The Health Score is derived from the logarithm of your estimated portfolio value: min(99, round(50 + log10(value + 1) × 12)).',
+              'Only assets with available price feeds are included. If an asset lacks a price, it is excluded from the total.',
+            ],
+          }}
+        >
+          <div className="flex justify-between items-start mb-3 max-[480px]:flex-col max-[480px]:gap-3">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5">Portfolio Snapshot</p>
-              <h3 className="text-4xl font-bold tracking-tight text-white max-[480px]:text-3xl">{balance.value}</h3>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1.5">Portfolio Snapshot</p>
+              <h3 className="text-4xl font-bold tracking-tight text-slate-900 max-[480px]:text-3xl">{balance.value}</h3>
             </div>
-            <div className="text-right max-[480px]:text-left">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1.5">Health Score</p>
+            <MetricExplainer
+              as="div"
+              className="text-right max-[480px]:text-left"
+              explanation={portfolio.scoreExplanation}
+            >
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1.5">Health Score</p>
               <div className="inline-flex items-center px-4 py-2 rounded-2xl bg-teal-400/10 border border-teal-400/20 backdrop-blur-sm">
                 <p className="text-xl font-bold text-teal-400">{score}<span className="text-xs text-teal-400/50 ml-0.5">/100</span></p>
               </div>
-            </div>
+            </MetricExplainer>
           </div>
-          <div className="flex items-center gap-3 text-sm max-[480px]:text-xs font-medium text-slate-300 pt-3.5 border-t border-white/10">
-            <div className="w-7 h-7 rounded-full bg-teal-400/20 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 text-sm max-[480px]:text-xs font-medium pt-3 border-t border-gray-100">
+            <div className="w-7 h-7 rounded-full bg-teal-400/10 flex items-center justify-center shrink-0">
               <MaterialIcon icon="stars" fill className="text-teal-400 text-base" />
             </div>
-            <span className="opacity-70">Top Performing Asset:</span>
-            <span className="text-white font-bold">{topAsset}</span>
+            <span className="text-slate-900 font-semibold">Top Performing Asset:</span>
+            <span className="text-teal-500 font-bold">{topAsset}</span>
           </div>
-        </div>
-      </section>
+      </MetricExplainer>
 
       {/* Activity Score */}
       <section>
         <div className="section-label mb-[18px] flex justify-between text-sm font-[750] tracking-[-.02em] text-[var(--ink)]">
           <strong>Activity Score</strong>
         </div>
-        <div className="apple-card p-[25px] max-[480px]:p-5">
+        <MetricExplainer
+          as="div"
+          className="apple-card p-[25px] max-[480px]:p-5"
+          explanation={{
+            title: 'Activity Score',
+            summary: 'A 0–100 score that reflects your wallet\'s overall health based on portfolio value, transaction activity, risk level, and protocol interactions. Higher scores indicate stronger wallet engagement.',
+            formula: 'Base score = min(99, round(50 + log10(estimated priced assets + 1) × 12)). Each factor is independently rated as Strong, Moderate, Low, Developing, or Needs Attention.',
+            details: [
+              `Score: ${score}/100 — ${scoreLabel}.`,
+              'Four factors are evaluated alongside the base score:',
+              '• Transaction Activity — based on transaction count in the selected period (Very High > 500, High > 100, Moderate ≤ 100).',
+              '• Portfolio Value — the estimated USD value of your priced assets.',
+              '• Risk Profile — based on asset concentration, failure rate, and protocol diversity (Low, Moderate, or High).',
+              '• Protocol Interactions — the number of distinct protocols or contracts used.',
+              'Each factor\'s strength rating is a simplified label derived from the underlying data — not a weighted input to the score.',
+            ],
+          }}
+        >
           <div className="flex items-center gap-6 mb-6 max-[480px]:flex-col max-[480px]:text-center">
             <div className="relative w-20 h-20 shrink-0">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
@@ -237,7 +272,7 @@ export function MoneyFlowTab({ wallet }) {
             </div>
           </div>
 
-          <div className="px-3.5 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10">
+          <div className="px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.12em] mb-0.5">Strongest Factor</p>
@@ -272,7 +307,21 @@ export function MoneyFlowTab({ wallet }) {
             <p className="text-xs text-slate-500 mt-1 leading-relaxed">{weaknessTip}</p>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10 flex items-start gap-3">
+          <MetricExplainer
+            as="div"
+            className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10 flex items-start gap-3"
+            explanation={{
+              title: 'Score Benchmark',
+              summary: 'How your wallet\'s activity score compares against other analyzed Ethereum wallets.',
+              formula: 'Top 5% (95+) | Top 15% (85+) | Top 30% (70+) | Above average (50+) | Below average (<50)',
+              details: [
+                `${benchmarkLabel}.`,
+                'Benchmarks are relative to all Ethereum wallets analyzed on the platform for the same period.',
+                'The score is based on four factors: Transaction Activity, Portfolio Value, Risk Profile, and Protocol Interactions.',
+                'Higher scores indicate stronger wallet activity and healthier portfolio management.',
+              ],
+            }}
+          >
             <div className="w-8 h-8 rounded-full bg-teal-400/10 flex items-center justify-center shrink-0">
               <MaterialIcon icon="bar_chart" className="text-teal-400 text-lg" />
             </div>
@@ -280,59 +329,95 @@ export function MoneyFlowTab({ wallet }) {
               <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{benchmarkLabel}</p>
               <p className="text-[11px] text-slate-500 mt-0.5">{scoreExplanation}</p>
             </div>
-          </div>
-        </div>
+          </MetricExplainer>
+        </MetricExplainer>
       </section>
 
       {/* Money Journey */}
-      <section>
-        <div className="section-label mb-[18px] flex justify-between text-sm font-[750] tracking-[-.02em] text-[var(--ink)]">
-          <strong>Money Journey</strong>
-        </div>
-        <div className="apple-card overflow-hidden">
-          {groupedTransactions.length > 0 ? groupedTransactions.map((group) => (
-            <div key={group.date}>
-              <div className="px-[25px] pt-5 pb-2.5 max-[480px]:px-5 max-[480px]:pt-4 max-[480px]:pb-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">{group.date}</span>
+      <section className="min-[900px]:px-0.5">
+        {groupedTransactions.length > 0 ? (
+          <div className="activity-layout grid grid-cols-[minmax(0,1.65fr)_minmax(300px,.9fr)] items-stretch gap-[18px] max-[1050px]:grid-cols-[minmax(0,1.35fr)_minmax(270px,.85fr)] max-[1050px]:gap-[14px] max-[899px]:grid-cols-1">
+            <div className="card activity-feed rounded-3xl border-0 p-[22px] max-[1050px]:p-[18px] max-[480px]:rounded-[20px] max-[480px]:p-3.5">
+              <div className="activity-card__heading flex min-h-[35px] items-center justify-between gap-4">
+                <div className="grid gap-[3px]">
+                  <span>{flow.periodLabel}</span>
+                  <h2>Recent Activity</h2>
+                </div>
               </div>
-              <div className="divide-y divide-gray-50 dark:divide-white/5">
-                {group.items.map((tx, i) => {
-                  const config = getTxConfig(tx)
-                  return (
-                    <div key={tx.title} className="px-[25px] py-3.5 flex items-center gap-4 hover:bg-gray-50/60 dark:hover:bg-white/[0.02] transition-colors duration-150 max-[480px]:px-5 max-[480px]:py-3">
-                      <div className={`w-11 h-11 rounded-xl ${config.bg} flex items-center justify-center shrink-0 max-[480px]:w-10 max-[480px]:h-10`}>
-                        <MaterialIcon icon={config.icon} className={`${config.color} text-xl max-[480px]:text-lg`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <h4 className="text-sm font-bold truncate">{tx.displayTitle}</h4>
-                          <span className={`text-sm font-bold ${config.color} shrink-0`}>{tx.amount}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2 mt-1">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-[11px] text-slate-500 font-medium truncate">{tx.protocol}</span>
-                            <span className="text-slate-300 dark:text-slate-600 select-none">·</span>
-                            <span className="text-[11px] text-slate-400 shrink-0">{tx.meta}</span>
-                          </div>
-                          <span className={`shrink-0 px-2 py-0.5 rounded-md text-[9px] font-bold ${config.bg} ${config.color}`}>
-                            {config.badge}
+              <div className="transaction-list mt-3 grid grid-cols-1 gap-[3px]">
+                {groupedTransactions.map((group) => (
+                  <div key={group.date}>
+                    <div className="px-1 pt-2 pb-1">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em]">{group.date}</span>
+                    </div>
+                    {group.items.map((tx) => (
+                      <article
+                        key={tx.title}
+                        className={`transaction transaction--${tx.tone} relative grid min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto_minmax(72px,auto)] items-center gap-[11px] rounded-[14px] border-0 bg-transparent p-[13px_11px] max-[1050px]:grid-cols-[auto_minmax(0,1fr)_auto] max-[700px]:grid-cols-[auto_minmax(0,1fr)] max-[480px]:gap-[9px] max-[480px]:p-[9px_7px]`}
+                        tabIndex="0"
+                      >
+                        <div className="transaction__visual">
+                          <span className={`icon-box ${tx.tone}`}><Icon name={tx.icon} alt="" /></span>
+                          <span className={`protocol-logo protocol-logo--${tx.tone}`} title={tx.protocol}>
+                            {tx.protocolMark}
                           </span>
                         </div>
+                        <div className="transaction__main grid min-w-0 gap-1">
+                          <strong>{tx.displayTitle}</strong>
+                          <div className="transaction__context">
+                            <span className="transaction__protocol">{tx.protocol}</span>
+                            <span aria-hidden="true">•</span>
+                            <span className="chain-badge">{tx.chain}</span>
+                          </div>
+                        </div>
+                        <div className="transaction__amount">
+                          <strong className={tx.positive ? 'positive' : ''}>{tx.amount}</strong>
+                          <span>{tx.crypto}</span>
+                        </div>
+                        <span className="transaction__time">{tx.meta}</span>
+                      </article>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <aside className="card highlights-card rounded-3xl border-0 p-[22px] max-[1050px]:p-[18px] max-[480px]:rounded-[20px] max-[480px]:p-3.5">
+              <div className="activity-card__heading flex min-h-[35px] items-center justify-between gap-4">
+                <div className="grid gap-[3px]">
+                  <span>{flow.periodLabel}</span>
+                  <h2>Key Highlights</h2>
+                </div>
+              </div>
+              <div className="highlights-list mt-3 grid gap-[7px] max-[899px]:grid-cols-2 max-[480px]:grid-cols-1">
+                {highlights.map((highlight) => {
+                  const HighlightIcon = highlightIcons[highlight.icon]
+                  return (
+                    <article
+                      key={highlight.label}
+                      className={`highlight-item highlight-item--${highlight.tone} grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2.5 rounded-[15px] p-[11px]`}
+                    >
+                      <span className="highlight-item__icon"><HighlightIcon aria-hidden="true" /></span>
+                      <div className="grid min-w-0 gap-[3px]">
+                        <span>{highlight.label}</span>
+                        <strong>{highlight.value} <small>• {highlight.detail}</small></strong>
                       </div>
-                    </div>
+                    </article>
                   )
                 })}
               </div>
-            </div>
-          )) : (
-            <div className="py-16 text-center">
+            </aside>
+          </div>
+        ) : (
+          <div className="card activity-feed rounded-3xl border-0 p-[22px] max-[480px]:p-5 text-center">
+            <div className="py-16">
               <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
                 <MaterialIcon icon="receipt_long" className="text-slate-400 text-2xl" />
               </div>
               <p className="text-sm text-slate-500">No transactions found for this period.</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </section>
     </div>
   )
