@@ -319,6 +319,11 @@ h1, h2, h3 { color: var(--ink); font-weight: 800; letter-spacing: -.035em; }
 .ai-card__mark::after { left: -6px; bottom: -5px; font-size: 7px; opacity: .62; }
 .ai-card__mark .icon { width: 20px; height: 20px; }
 .ai-card__mark .icon-3d { width: 34px; height: 34px; }
+
+.apple-card { background: white; border-radius: 1.5rem; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03); border: 1px solid rgba(0, 0, 0, 0.05); }
+html[data-theme="dark"] .apple-card { background: var(--card); border-color: rgba(255,255,255,.065); box-shadow: 0 4px 30px rgba(0,0,0,.12); }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .ai-card__heading span { color: var(--accent); font-size: 10px; font-weight: 750; letter-spacing: .01em; }
 .ai-card__heading h2 { margin-top: 4px; font-size: 16px; line-height: 1.3; letter-spacing: -.035em; }
 .ai-card__lead p { margin-top: 22px; font-size: 22px; line-height: 1.28; font-weight: 800; letter-spacing: -.05em; }

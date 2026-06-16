@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Activity } from './components/dashboard/Activity'
 import { BalanceCard } from './components/dashboard/BalanceCard'
 import { DashboardLoader } from './components/dashboard/DashboardLoader'
 import { IdentityCard } from './components/dashboard/IdentityCard'
 import { Insights } from './components/dashboard/Insights'
+import { MoneyFlowTab } from './components/dashboard/MoneyFlowTab'
 import { PortfolioCard } from './components/dashboard/PortfolioCard'
 import { Summary } from './components/dashboard/Summary'
 import { WalletPersonality } from './components/dashboard/WalletPersonality'
@@ -15,6 +17,7 @@ import { ANALYSIS_PERIODS, walletService } from './services/walletService'
 const exampleWallets = walletService.listExampleWallets()
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('Overview')
   const {
     wallet,
     error,
@@ -63,33 +66,40 @@ export default function App() {
 
       {wallet ? (
         <>
-          <main className={`grid gap-9 max-[700px]:gap-6 ${isLoading ? 'dashboard-loading' : 'dashboard-ready'}`} key={wallet.id}>
-            {isLoading && <DashboardLoader />}
-            <div className="dashboard-grid dashboard-grid--top grid gap-6 min-[900px]:grid-cols-2 min-[1180px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-              <BalanceCard
-                balance={wallet.balance}
-                periods={ANALYSIS_PERIODS}
-                selectedDays={analysisDays}
-                pendingDays={pendingAnalysisDays}
-                isLoading={isPeriodLoading}
-                error={error}
-                onPeriodChange={selectAnalysisPeriod}
+          {activeTab === 'Overview' ? (
+            <main className={`grid gap-9 max-[700px]:gap-6 ${isLoading ? 'dashboard-loading' : 'dashboard-ready'}`} key={wallet.id}>
+              {isLoading && <DashboardLoader />}
+              <div className="dashboard-grid dashboard-grid--top grid gap-6 min-[900px]:grid-cols-2 min-[1180px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+                <BalanceCard
+                  balance={wallet.balance}
+                  periods={ANALYSIS_PERIODS}
+                  selectedDays={analysisDays}
+                  pendingDays={pendingAnalysisDays}
+                  isLoading={isPeriodLoading}
+                  error={error}
+                  onPeriodChange={selectAnalysisPeriod}
+                />
+                <PortfolioCard portfolio={wallet.portfolio} />
+                <IdentityCard stats={wallet.identity} />
+                <WalletPersonality personality={wallet.personality} />
+              </div>
+              <Summary flow={wallet.flow} />
+              <Activity
+                walletAddress={wallet.id}
+                transactions={wallet.transactions}
+                highlights={wallet.highlights}
+                periodLabel={wallet.periodLabel}
+                reportRange={wallet.reportRange}
               />
-              <PortfolioCard portfolio={wallet.portfolio} />
-              <IdentityCard stats={wallet.identity} />
-              <WalletPersonality personality={wallet.personality} />
-            </div>
-            <Summary flow={wallet.flow} />
-            <Activity
-              walletAddress={wallet.id}
-              transactions={wallet.transactions}
-              highlights={wallet.highlights}
-              periodLabel={wallet.periodLabel}
-              reportRange={wallet.reportRange}
-            />
-            <Insights insights={wallet.insights} />
-          </main>
-          <BottomNav />
+              <Insights insights={wallet.insights} />
+            </main>
+          ) : (
+            <main key={`flow-${wallet.id}`} className={isLoading ? 'dashboard-loading' : 'dashboard-ready'}>
+              {isLoading && <DashboardLoader />}
+              <MoneyFlowTab wallet={wallet} />
+            </main>
+          )}
+          <BottomNav active={activeTab} onChange={setActiveTab} />
         </>
       ) : (
         <main className="wallet-empty-state grid min-h-[58vh] place-content-center justify-items-center gap-3 rounded-[28px] border border-dashed border-[rgba(44,122,123,.2)] bg-white/55 px-6 py-12 text-center dark:border-[var(--border)] dark:bg-[rgba(17,24,39,.55)]">
