@@ -38,50 +38,55 @@ export function MoneyFlowTab({ wallet }) {
   const txnStat = balance.stats?.find((s) => s.label === 'Transactions')
   const totalTxns = txnStat?.value || '—'
 
-  const txnRaw = parseInt(String(totalTxns).replace(/[^0-9.]/g, '')) || 0
-  const volRaw = parseFloat(balance.value.replace(/[^0-9.]/g, '')) || 0
-  const actRaw = portfolioMetrics.length
-  const txnNorm = Math.min(100, txnRaw * 1.5) || 15
-  const volNorm = Math.min(100, volRaw / 1200) || 15
-  const actNorm = Math.min(100, actRaw * 12) || 15
-  const sumNorm = txnNorm + volNorm + actNorm
-  const txnPct = Math.round((txnNorm / sumNorm) * 100)
-  const volPct = Math.round((volNorm / sumNorm) * 100)
-  const actPct = Math.max(0, 100 - txnPct - volPct)
+  const portfolioValue = parseFloat(balance.value.replace(/[^0-9.]/g, '')) || 0
 
-  const breakdownItems = [
+  const riskMetric = portfolioMetrics.find(m => m.label === 'Risk Level')
+  const protocolMetric = portfolioMetrics.find(m => m.label === 'Most Used Protocol' || m.label === 'Most Used Contract')
+  const protocolInteractions = parseInt(protocolMetric?.detail?.replace(/[^0-9]/g, '')) || 0
+
+  const signals = [
     {
-      label: 'Transactions',
+      label: 'Transaction Activity',
       value: totalTxns,
-      pct: txnPct,
-      color: 'bg-teal-400',
-      bar: 'bg-gradient-to-r from-teal-400 to-emerald-400',
-      trend: txnRaw > 50 ? 'up' : txnRaw > 15 ? 'stable' : 'down',
-      detail: `${txnRaw} on-chain transactions this period`,
+      strength: activityLevel === 'Very High' ? 'Strong' : activityLevel === 'High' ? 'Moderate' : 'Low',
+      dotColor: activityLevel === 'Very High' ? 'bg-emerald-500' : activityLevel === 'High' ? 'bg-amber-500' : 'bg-slate-400',
+      badgeClass: activityLevel === 'Very High' ? 'bg-emerald-500/10 text-emerald-500' : activityLevel === 'High' ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-500/10 text-slate-500',
     },
     {
-      label: 'Volume',
+      label: 'Portfolio Value',
       value: balance.value,
-      pct: volPct,
-      color: 'bg-emerald-500',
-      bar: 'bg-gradient-to-r from-emerald-500 to-teal-500',
-      trend: volRaw > 50000 ? 'up' : volRaw > 10000 ? 'stable' : 'down',
-      detail: `${balance.value} total volume moved`,
+      strength: portfolioValue > 50000 ? 'Strong' : portfolioValue > 10000 ? 'Moderate' : 'Developing',
+      dotColor: portfolioValue > 50000 ? 'bg-emerald-500' : portfolioValue > 10000 ? 'bg-amber-500' : 'bg-slate-400',
+      badgeClass: portfolioValue > 50000 ? 'bg-emerald-500/10 text-emerald-500' : portfolioValue > 10000 ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-500/10 text-slate-500',
     },
     {
-      label: 'Active Metrics',
-      value: `${actRaw}`,
-      pct: actPct,
-      color: 'bg-teal-500',
-      bar: 'bg-gradient-to-r from-teal-500 to-cyan-400',
-      trend: actRaw > 5 ? 'up' : actRaw > 2 ? 'stable' : 'down',
-      detail: `${actRaw} active portfolio positions tracked`,
+      label: 'Risk Profile',
+      value: riskMetric?.value || '—',
+      strength: riskMetric?.value === 'Low' ? 'Strong' : riskMetric?.value === 'Moderate' ? 'Moderate' : 'Needs Attention',
+      dotColor: riskMetric?.value === 'Low' ? 'bg-emerald-500' : riskMetric?.value === 'Moderate' ? 'bg-amber-500' : 'bg-rose-500',
+      badgeClass: riskMetric?.value === 'Low' ? 'bg-emerald-500/10 text-emerald-500' : riskMetric?.value === 'Moderate' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500',
+      detail: riskMetric?.detail,
+    },
+    {
+      label: 'Protocol Diversity',
+      value: `${protocolInteractions} protocols`,
+      strength: protocolInteractions > 5 ? 'Strong' : protocolInteractions > 2 ? 'Moderate' : 'Low',
+      dotColor: protocolInteractions > 5 ? 'bg-emerald-500' : protocolInteractions > 2 ? 'bg-amber-500' : 'bg-slate-400',
+      badgeClass: protocolInteractions > 5 ? 'bg-emerald-500/10 text-emerald-500' : protocolInteractions > 2 ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-500/10 text-slate-500',
     },
   ]
 
-  const trendIcon = { up: 'trending_up', stable: 'trending_flat', down: 'trending_down' }
-  const trendColor = { up: 'text-emerald-500', stable: 'text-amber-500', down: 'text-rose-500' }
-  const scoreLevel = score >= 80 ? 'Very High' : score >= 60 ? 'High' : score >= 40 ? 'Moderate' : score >= 20 ? 'Low' : 'Very Low'
+  const scoreLabel = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : score >= 20 ? 'Limited' : 'Minimal'
+  const strongCount = signals.filter(s => s.strength === 'Strong').length
+  const attentionCount = signals.filter(s => s.strength === 'Needs Attention').length
+
+  const scoreExplanation = score >= 80
+    ? `Your score of ${score}/100 is considered Excellent, with ${strongCount} of 4 factors performing strongly.`
+    : score >= 60
+    ? `Your score of ${score}/100 is Good. ${strongCount} of 4 factors show above-average performance.`
+    : score >= 40
+    ? `Your score of ${score}/100 is Fair. Increasing transaction activity and protocol engagement could improve it.`
+    : `Your score of ${score}/100 indicates Limited activity. Regular wallet usage across diverse protocols may help.`
 
   return (
     <div className="grid gap-9 max-[700px]:gap-6">
@@ -172,25 +177,24 @@ export function MoneyFlowTab({ wallet }) {
               </div>
             </div>
             <div className="text-left max-[480px]:text-center">
-              <h4 className="font-bold text-2xl max-[480px]:text-xl tracking-tight">{activityLevel}</h4>
-              <p className="text-xs text-slate-500 mt-1">Weighted contribution breakdown</p>
+              <h4 className="font-bold text-2xl max-[480px]:text-xl tracking-tight">{scoreLabel}</h4>
+              <p className="text-xs text-slate-500 mt-1">Score factors and signal strength</p>
             </div>
           </div>
 
-          <div className="space-y-5 max-[480px]:space-y-3">
-            {breakdownItems.map((item) => (
-              <div key={item.label} className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1.5 max-[480px]:gap-x-2 max-[480px]:gap-y-1">
-                <span className={`w-2 h-2 max-[480px]:w-1.5 max-[480px]:h-1.5 rounded-full ${item.color} row-span-2 mt-0.5`} />
-                <div className="flex items-center justify-between min-w-0">
-                  <span className="text-sm max-[480px]:text-xs font-semibold truncate">{item.label}</span>
-                  <MaterialIcon icon={trendIcon[item.trend]} className={`${trendColor[item.trend]} text-lg max-[480px]:text-base shrink-0 ml-2`} />
-                </div>
-                <div className="col-start-2 col-end-4">
-                  <div className="h-3 max-[480px]:h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${item.bar}`} style={{ width: `${item.pct}%` }} />
+          <div className="space-y-3 max-[480px]:space-y-2">
+            {signals.map((signal) => (
+              <div key={signal.label} className="flex items-center justify-between py-2.5 px-3 max-[480px]:py-2 max-[480px]:px-2.5 rounded-xl bg-gray-50 dark:bg-white/[0.03]">
+                <div className="flex items-center gap-3 max-[480px]:gap-2 min-w-0">
+                  <span className={`w-2.5 h-2.5 max-[480px]:w-2 max-[480px]:h-2 rounded-full ${signal.dotColor} shrink-0`} />
+                  <div className="min-w-0">
+                    <p className="text-sm max-[480px]:text-xs font-semibold truncate">{signal.label}</p>
+                    <p className="text-xs max-[480px]:text-[10px] text-slate-500 truncate">{signal.value}</p>
                   </div>
                 </div>
-                <span className="text-xs max-[480px]:text-[10px] font-bold text-slate-500">{item.pct}%</span>
+                <span className={`shrink-0 px-2.5 py-1 max-[480px]:px-2 max-[480px]:py-0.5 rounded-full text-[10px] max-[480px]:text-[9px] font-bold ${signal.badgeClass}`}>
+                  {signal.strength}
+                </span>
               </div>
             ))}
           </div>
@@ -199,10 +203,7 @@ export function MoneyFlowTab({ wallet }) {
             <div className="w-8 h-8 rounded-full bg-teal-400/10 flex items-center justify-center shrink-0">
               <MaterialIcon icon="info" className="text-teal-400 text-lg" />
             </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Your score of <strong className="text-teal-400">{score}</strong> is classified as <strong className="text-teal-400">{scoreLevel}</strong> based on{' '}
-              {breakdownItems.filter((b) => b.trend === 'up').length} of 3 contributing factors showing above-average activity.
-            </p>
+            <p className="text-[11px] text-slate-500 leading-relaxed">{scoreExplanation}</p>
           </div>
         </div>
       </section>
