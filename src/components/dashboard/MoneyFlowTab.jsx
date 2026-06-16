@@ -1,12 +1,5 @@
 import { MaterialIcon } from '../common/MaterialIcon'
 
-const categoryColors = [
-  { dot: 'bg-teal-400', bar: 'bg-teal-400' },
-  { dot: 'bg-violet-500', bar: 'bg-violet-500' },
-  { dot: 'bg-emerald-500', bar: 'bg-emerald-500' },
-  { dot: 'bg-orange-500', bar: 'bg-orange-500' },
-]
-
 function formatPeriod(periodLabel) {
   const d = new Date()
   return (periodLabel || d.toLocaleString('en-US', { month: 'long', year: 'numeric' })).toUpperCase()
@@ -44,28 +37,72 @@ export function MoneyFlowTab({ wallet }) {
   const activityLevel = activityStat?.value || (score > 70 ? 'Highly Active' : score > 40 ? 'Active' : 'Moderate')
   const txnStat = balance.stats?.find((s) => s.label === 'Transactions')
   const totalTxns = txnStat?.value || '—'
-  const categoryItems = portfolioMetrics.length >= 3 ? portfolioMetrics : (flow.categories || [])
+
+  const txnRaw = parseInt(String(totalTxns).replace(/[^0-9.]/g, '')) || 0
+  const volRaw = parseFloat(balance.value.replace(/[^0-9.]/g, '')) || 0
+  const actRaw = portfolioMetrics.length
+  const txnNorm = Math.min(100, txnRaw * 1.5) || 15
+  const volNorm = Math.min(100, volRaw / 1200) || 15
+  const actNorm = Math.min(100, actRaw * 12) || 15
+  const sumNorm = txnNorm + volNorm + actNorm
+  const txnPct = Math.round((txnNorm / sumNorm) * 100)
+  const volPct = Math.round((volNorm / sumNorm) * 100)
+  const actPct = Math.max(0, 100 - txnPct - volPct)
+
+  const breakdownItems = [
+    {
+      label: 'Transactions',
+      value: totalTxns,
+      pct: txnPct,
+      color: 'bg-teal-400',
+      bar: 'bg-gradient-to-r from-teal-400 to-emerald-400',
+      trend: txnRaw > 50 ? 'up' : txnRaw > 15 ? 'stable' : 'down',
+      detail: `${txnRaw} on-chain transactions this period`,
+    },
+    {
+      label: 'Volume',
+      value: balance.value,
+      pct: volPct,
+      color: 'bg-emerald-500',
+      bar: 'bg-gradient-to-r from-emerald-500 to-teal-500',
+      trend: volRaw > 50000 ? 'up' : volRaw > 10000 ? 'stable' : 'down',
+      detail: `${balance.value} total volume moved`,
+    },
+    {
+      label: 'Active Metrics',
+      value: `${actRaw}`,
+      pct: actPct,
+      color: 'bg-teal-500',
+      bar: 'bg-gradient-to-r from-teal-500 to-cyan-400',
+      trend: actRaw > 5 ? 'up' : actRaw > 2 ? 'stable' : 'down',
+      detail: `${actRaw} active portfolio positions tracked`,
+    },
+  ]
+
+  const trendIcon = { up: 'trending_up', stable: 'trending_flat', down: 'trending_down' }
+  const trendColor = { up: 'text-emerald-500', stable: 'text-amber-500', down: 'text-rose-500' }
+  const scoreLevel = score >= 80 ? 'Very High' : score >= 60 ? 'High' : score >= 40 ? 'Moderate' : score >= 20 ? 'Low' : 'Very Low'
 
   return (
     <div className="grid gap-9 max-[700px]:gap-6">
       {/* Money Summary */}
       <div className="space-y-[18px]">
-        <div className="bg-teal-50/50 border border-teal-100/50 rounded-2xl p-4 flex items-center gap-3">
-          <MaterialIcon icon="auto_awesome" fill className="text-teal-400 shrink-0" />
-          <p className="text-sm font-semibold text-teal-900">{tip}</p>
+        <div className="bg-teal-50/50 border border-teal-100/50 rounded-2xl p-4 max-[480px]:p-3 flex items-center gap-3">
+          <MaterialIcon icon="auto_awesome" fill className="text-teal-400 shrink-0 text-lg max-[480px]:text-base" />
+          <p className="text-sm max-[480px]:text-xs font-semibold text-teal-900">{tip}</p>
         </div>
         <div className="apple-card p-[25px] max-[480px]:p-5">
-          <div className="flex justify-between items-center mb-5">
+          <div className="flex justify-between items-center mb-5 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-2">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 opacity-70">Money Flow</span>
             <span className="px-3 py-1 bg-teal-400/10 text-teal-400 text-[10px] font-bold rounded-full">{formatPeriod(flow.periodLabel)}</span>
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium text-slate-500">Net Growth</p>
-            <h2 className="text-5xl font-bold tracking-tight text-teal-400 max-[480px]:text-4xl">
+            <p className="text-sm max-[480px]:text-xs font-medium text-slate-500">Net Growth</p>
+            <h2 className="text-5xl max-[480px]:text-3xl font-bold tracking-tight text-teal-400">
               {netGrowthValue(flow) >= 0 ? '+' : ''}{netGrowthValue(flow).toLocaleString()} {currencySymbol(flow)}
             </h2>
           </div>
-          <div className="grid grid-cols-2 gap-8 mt-6">
+          <div className="grid grid-cols-2 gap-8 max-[480px]:gap-4 mt-6">
             <div className="space-y-1">
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest opacity-60">Received</p>
               <p className="text-2xl font-bold text-teal-400">{flow.received.value}</p>
@@ -95,67 +132,12 @@ export function MoneyFlowTab({ wallet }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm font-medium text-slate-300 pt-5 border-t border-white/10">
+          <div className="flex items-center gap-3 text-sm max-[480px]:text-xs font-medium text-slate-300 pt-5 border-t border-white/10">
             <div className="w-8 h-8 rounded-full bg-teal-400/20 flex items-center justify-center shrink-0">
               <MaterialIcon icon="stars" fill className="text-teal-400 text-lg" />
             </div>
             <span className="opacity-70">Top Performing Asset:</span>
             <span className="text-white font-bold">{topAsset}</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Spending Distribution */}
-      <section>
-        <div className="section-label mb-[18px] flex justify-between text-sm font-[750] tracking-[-.02em] text-[var(--ink)]">
-          <strong>Spending Distribution</strong>
-        </div>
-        <p className="text-xs text-slate-500 mb-[18px]">How your funds are allocated across categories.</p>
-        <div className="apple-card p-[25px] max-[480px]:p-5">
-          {categoryItems.length > 1 && (
-            <div className="mb-7">
-              <div className="h-5 w-full bg-gray-50 rounded-full flex overflow-hidden p-1 shadow-inner">
-                {categoryItems.map((item, i) => (
-                  <div
-                    key={item.label}
-                    className={`${categoryColors[i % categoryColors.length].bar} rounded-full ${i < categoryItems.length - 1 ? 'mr-0.5' : ''}`}
-                    style={{ width: `${Math.max(8, 100 / categoryItems.length)}%` }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="grid gap-6 max-[480px]:gap-4">
-            {categoryItems.map((item, i) => {
-              const color = categoryColors[i % categoryColors.length]
-              return (
-                <div key={item.label} className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-2.5 h-2.5 rounded-full ${color.dot}`} />
-                        <span className="text-sm font-bold">{item.label}</span>
-                      </div>
-                      <span className="text-[11px] text-slate-500 opacity-70">{item.detail || item.value}</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold tracking-tight">{item.value}</p>
-                    </div>
-                  </div>
-                  <div className="h-1 w-full bg-gray-50 rounded-full overflow-hidden">
-                    <div className={`h-full ${color.bar} rounded-full`} style={{ width: `${Math.max(4, 100 / categoryItems.length)}%` }} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          <div className="pt-5 border-t border-gray-100 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-teal-400/10 flex items-center justify-center shrink-0">
-              <MaterialIcon icon="lightbulb" className="text-teal-400 text-lg" />
-            </div>
-            <p className="text-[11px] font-medium text-slate-500 leading-relaxed">
-              Optimization Tip: Diversifying your allocations could help balance risk and returns.
-            </p>
           </div>
         </div>
       </section>
@@ -166,7 +148,7 @@ export function MoneyFlowTab({ wallet }) {
           <strong>Activity Score</strong>
         </div>
         <div className="apple-card p-[25px] max-[480px]:p-5">
-          <div className="flex items-center gap-6 max-[480px]:flex-col max-[480px]:text-center">
+          <div className="flex items-center gap-6 mb-7 max-[480px]:flex-col max-[480px]:text-center">
             <div className="relative w-24 h-24 shrink-0">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                 <defs>
@@ -189,38 +171,38 @@ export function MoneyFlowTab({ wallet }) {
                 <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Score</span>
               </div>
             </div>
-            <div>
-              <h4 className="font-bold text-2xl tracking-tight">{activityLevel}</h4>
+            <div className="text-left max-[480px]:text-center">
+              <h4 className="font-bold text-2xl max-[480px]:text-xl tracking-tight">{activityLevel}</h4>
+              <p className="text-xs text-slate-500 mt-1">Weighted contribution breakdown</p>
             </div>
           </div>
-          <div className="h-40 w-full pt-4" aria-hidden="true">
-            <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 40">
-              <defs>
-                <linearGradient id="chartGradientNew" x1="0" x2="0" y1="0" y2="100%">
-                  <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.2" />
-                  <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d="M0,32 C10,32 20,5 35,5 S55,25 70,15 S90,10 100,10"
-                fill="none" stroke="#2dd4bf" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
-              <path d="M0,32 C10,32 20,5 35,5 S55,25 70,15 S90,10 100,10 L100,40 L0,40 Z"
-                fill="url(#chartGradientNew)" />
-              <circle cx="35" cy="5" fill="#2dd4bf" r="3" stroke="white" strokeWidth="1.5" />
-            </svg>
+
+          <div className="space-y-5 max-[480px]:space-y-3">
+            {breakdownItems.map((item) => (
+              <div key={item.label} className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1.5 max-[480px]:gap-x-2 max-[480px]:gap-y-1">
+                <span className={`w-2 h-2 max-[480px]:w-1.5 max-[480px]:h-1.5 rounded-full ${item.color} row-span-2 mt-0.5`} />
+                <div className="flex items-center justify-between min-w-0">
+                  <span className="text-sm max-[480px]:text-xs font-semibold truncate">{item.label}</span>
+                  <MaterialIcon icon={trendIcon[item.trend]} className={`${trendColor[item.trend]} text-lg max-[480px]:text-base shrink-0 ml-2`} />
+                </div>
+                <div className="col-start-2 col-end-4">
+                  <div className="h-3 max-[480px]:h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${item.bar}`} style={{ width: `${item.pct}%` }} />
+                  </div>
+                </div>
+                <span className="text-xs max-[480px]:text-[10px] font-bold text-slate-500">{item.pct}%</span>
+              </div>
+            ))}
           </div>
-          <div className="grid grid-cols-3 gap-4 border-t border-gray-100 mt-6 pt-6 max-[480px]:pt-5">
-            <div className="text-center space-y-1">
-              <p className="text-2xl font-bold tracking-tight">{totalTxns}</p>
-              <p className="text-[9px] text-slate-500 uppercase font-bold tracking-[0.15em] opacity-60">Txns</p>
+
+          <div className="mt-6 pt-5 border-t border-gray-100 dark:border-white/10 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-teal-400/10 flex items-center justify-center shrink-0">
+              <MaterialIcon icon="info" className="text-teal-400 text-lg" />
             </div>
-            <div className="text-center border-x border-gray-100 px-4 space-y-1">
-              <p className="text-2xl font-bold tracking-tight">{balance.value.replace(/[^0-9.,kKmMbB]/g, '')}</p>
-              <p className="text-[9px] text-slate-500 uppercase font-bold tracking-[0.15em] opacity-60">Volume</p>
-            </div>
-            <div className="text-center space-y-1">
-              <p className="text-2xl font-bold tracking-tight">{portfolioMetrics.length}</p>
-              <p className="text-[9px] text-slate-500 uppercase font-bold tracking-[0.15em] opacity-60">Active</p>
-            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Your score of <strong className="text-teal-400">{score}</strong> is classified as <strong className="text-teal-400">{scoreLevel}</strong> based on{' '}
+              {breakdownItems.filter((b) => b.trend === 'up').length} of 3 contributing factors showing above-average activity.
+            </p>
           </div>
         </div>
       </section>
@@ -233,13 +215,13 @@ export function MoneyFlowTab({ wallet }) {
         <div className="flex gap-5 overflow-x-auto no-scrollbar pb-1">
           {insights.length > 0 ? insights.map((insight, i) => (
             <div key={insight.label}
-              className={`apple-card p-6 min-w-[260px] flex-shrink-0 ${i === 0 ? 'bg-teal-400 border-none text-white' : ''} ${i > 0 && i % 2 === 0 ? 'border-violet-500/10' : ''}`}
+              className={`apple-card p-6 max-[480px]:p-4 min-w-[260px] max-[480px]:min-w-[200px] flex-shrink-0 ${i === 0 ? 'bg-teal-400 border-none text-white' : ''} ${i > 0 && i % 2 === 0 ? 'border-violet-500/10' : ''}`}
             >
               <p className={`text-[10px] font-bold ${i === 0 ? 'text-white/70' : 'text-slate-500/50'} uppercase tracking-widest mb-3`}>{insight.label}</p>
               <p className="text-base font-semibold leading-snug">{insight.value} · {insight.suffix}</p>
             </div>
           )) : (
-            <div className="apple-card p-6 min-w-[260px] flex-shrink-0 bg-teal-400 border-none text-white">
+            <div className="apple-card p-6 max-[480px]:p-4 min-w-[260px] max-[480px]:min-w-[200px] flex-shrink-0 bg-teal-400 border-none text-white">
               <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-3">Insights</p>
               <p className="text-base font-semibold leading-snug">No insights available yet.</p>
             </div>
@@ -262,7 +244,7 @@ export function MoneyFlowTab({ wallet }) {
               const bg = isPositive ? 'bg-teal-400/10' : 'bg-rose-500/10'
 
               return (
-                <div key={tx.title} className={`py-6 flex items-center gap-5 ${!isLast ? 'border-b border-gray-50' : ''} transaction-row max-[480px]:gap-3 max-[480px]:py-4`}>
+                <div key={tx.title} className={`py-6 flex items-center gap-5 ${!isLast ? 'border-b border-gray-50 dark:border-white/5' : ''} transaction-row max-[480px]:gap-3 max-[480px]:py-4`}>
                   <div className={`w-14 h-14 rounded-2xl ${bg} flex items-center justify-center shrink-0 max-[480px]:w-12 max-[480px]:h-12`}>
                     <MaterialIcon icon={icon} className={`${color} text-2xl`} />
                   </div>
@@ -273,9 +255,9 @@ export function MoneyFlowTab({ wallet }) {
                         {tx.amount}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-1">
                       <p className="text-xs text-slate-500 font-medium opacity-60">{tx.protocol} · {tx.meta}</p>
-                      <span className={`px-2.5 py-0.5 ${isPositive ? 'bg-teal-400/10 text-teal-400' : 'bg-gray-100 text-gray-500'} text-[9px] font-bold rounded-full uppercase tracking-wider`}>
+                      <span className={`px-2.5 py-0.5 ${isPositive ? 'bg-teal-400/10 text-teal-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'} text-[9px] max-[480px]:text-[8px] font-bold rounded-full uppercase tracking-wider max-[480px]:mt-0.5`}>
                         {isPositive ? 'Completed' : 'Success'}
                       </span>
                     </div>
