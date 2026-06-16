@@ -1,3 +1,3 @@
-export function formatCount(value, complete = true) {
-  return `${Number(value || 0).toLocaleString()}${complete ? '' : '+'}`
+export function formatCount(value) {
+  return Number(value || 0).toLocaleString()
 }

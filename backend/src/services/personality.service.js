@@ -24,7 +24,10 @@ export function calculatePersonalityDetails({
   const successfulTransactions = normalTransactions.filter((transaction) => transaction.isError === "0");
   const swapCount = successfulTransactions.filter(isSwapTransaction).length;
   const defiInteractions =
-    (protocolCounts.Aave || 0) + (protocolCounts.Compound || 0) + (protocolCounts["1inch"] || 0);
+    (protocolCounts.Aave || 0) +
+    (protocolCounts.Compound || 0) +
+    (protocolCounts["1inch"] || 0) +
+    (protocolCounts.Uniswap || 0);
   const incomingTransfers = tokenTransfers.filter((transfer) => transfer.direction === "receive").length;
   const outgoingTransfers = tokenTransfers.filter((transfer) => transfer.direction === "send").length;
   const scores = {

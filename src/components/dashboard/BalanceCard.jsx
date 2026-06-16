@@ -24,24 +24,42 @@ function ValueTooltip({ active, payload }) {
   )
 }
 
-export function BalanceCard({ balance, periods, selectedDays, pendingDays, isLoading, error, onPeriodChange }) {
+export function BalanceCard({ balance, periods, selectedDays, customRange, pendingDays, isLoading, error, onPeriodChange }) {
   const menuRef = useRef(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [customMode, setCustomMode] = useState(false)
+  const [customFrom, setCustomFrom] = useState(customRange?.from || '')
+  const [customTo, setCustomTo] = useState(customRange?.to || '')
   const selectedPeriod = periods.find((period) => period.value === selectedDays)
   const visiblePeriod = periods.find((period) => period.value === pendingDays) || selectedPeriod
 
   useEffect(() => {
+    setCustomFrom(customRange?.from || '')
+    setCustomTo(customRange?.to || '')
+  }, [customRange])
+
+  useEffect(() => {
     const closeMenu = (event) => {
-      if (!menuRef.current?.contains(event.target)) setIsMenuOpen(false)
+      if (!menuRef.current?.contains(event.target)) {
+        setIsMenuOpen(false)
+        setCustomMode(false)
+      }
     }
 
     document.addEventListener('pointerdown', closeMenu)
     return () => document.removeEventListener('pointerdown', closeMenu)
   }, [])
 
-  const selectPeriod = (days) => {
+  const selectPeriod = (days, range) => {
     setIsMenuOpen(false)
-    onPeriodChange(days)
+    setCustomMode(false)
+    onPeriodChange(days, range)
+  }
+
+  const handleCustomApply = () => {
+    if (customFrom && customTo) {
+      selectPeriod('custom', { from: customFrom, to: customTo })
+    }
   }
 
   return (
@@ -67,27 +85,74 @@ export function BalanceCard({ balance, periods, selectedDays, pendingDays, isLoa
         </button>
         {isMenuOpen && (
           <div
-            className="absolute right-0 grid w-[230px] gap-1 rounded-2xl border border-white/20 bg-[rgba(7,91,90,.96)] p-1.5 shadow-[0_18px_45px_rgba(0,60,59,.28)] backdrop-blur-xl"
+            className="absolute right-0 w-[230px] rounded-2xl border border-white/20 bg-[rgba(7,91,90,.96)] p-1.5 shadow-[0_18px_45px_rgba(0,60,59,.28)] backdrop-blur-xl"
             style={{ top: 'calc(100% + 8px)' }}
-            role="menu"
           >
-            {periods.map((period) => (
-              <button
-                className={`grid cursor-pointer grid-cols-[34px_1fr_auto] items-center gap-2 rounded-xl border-0 px-2.5 py-2 text-left text-white transition ${selectedDays === period.value ? 'bg-white/16' : 'bg-transparent hover:bg-white/10'}`}
-                type="button"
-                role="menuitemradio"
-                aria-checked={selectedDays === period.value}
-                onClick={() => selectPeriod(period.value)}
-                key={period.id}
-              >
-                <span className="grid size-[30px] place-items-center rounded-lg bg-white/10 text-[9px] font-extrabold">{period.shortLabel}</span>
-                <span className="grid gap-0.5">
-                  <strong className="text-[10px]">{period.label}</strong>
-                  <small className="text-[8px] text-white/60">{period.description}</small>
-                </span>
-                {selectedDays === period.value && <Check className="size-3.5" aria-hidden="true" />}
-              </button>
-            ))}
+            {customMode ? (
+              <div className="grid gap-2 p-2">
+                <label className="grid gap-1">
+                  <span className="text-[8px] font-bold text-white/60 uppercase tracking-widest">From</span>
+                  <input
+                    type="date"
+                    value={customFrom}
+                    onChange={(e) => setCustomFrom(e.target.value)}
+                    className="w-full rounded-lg border border-white/20 bg-white/10 px-2.5 py-2 text-xs text-white [color-scheme:dark]"
+                  />
+                </label>
+                <label className="grid gap-1">
+                  <span className="text-[8px] font-bold text-white/60 uppercase tracking-widest">To</span>
+                  <input
+                    type="date"
+                    value={customTo}
+                    onChange={(e) => setCustomTo(e.target.value)}
+                    className="w-full rounded-lg border border-white/20 bg-white/10 px-2.5 py-2 text-xs text-white [color-scheme:dark]"
+                  />
+                </label>
+                <div className="flex gap-1.5 mt-1">
+                  <button
+                    type="button"
+                    className="flex-1 rounded-lg bg-white/15 px-2.5 py-2 text-[9px] font-bold text-white/70 hover:bg-white/20"
+                    onClick={() => { setCustomMode(false); setCustomFrom(customRange?.from || ''); setCustomTo(customRange?.to || '') }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 rounded-lg bg-teal-500 px-2.5 py-2 text-[9px] font-bold text-white disabled:opacity-40"
+                    disabled={!customFrom || !customTo}
+                    onClick={handleCustomApply}
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-1" role="menu">
+                {periods.map((period) => (
+                  <button
+                    className={`grid cursor-pointer grid-cols-[34px_1fr_auto] items-center gap-2 rounded-xl border-0 px-2.5 py-2 text-left text-white transition ${selectedDays === period.value ? 'bg-white/16' : 'bg-transparent hover:bg-white/10'}`}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={selectedDays === period.value}
+                    onClick={() => {
+                      if (period.value === 'custom') {
+                        setCustomMode(true)
+                      } else {
+                        selectPeriod(period.value)
+                      }
+                    }}
+                    key={period.id}
+                  >
+                    <span className="grid size-[30px] place-items-center rounded-lg bg-white/10 text-[9px] font-extrabold">{period.shortLabel}</span>
+                    <span className="grid gap-0.5">
+                      <strong className="text-[10px]">{period.label}</strong>
+                      <small className="text-[8px] text-white/60">{period.description}</small>
+                    </span>
+                    {selectedDays === period.value && <Check className="size-3.5" aria-hidden="true" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

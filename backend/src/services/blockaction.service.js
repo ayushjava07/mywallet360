@@ -13,7 +13,7 @@ import {
 const BLOCKACTION_URL = process.env.BLOCKACTION_API_URL;
 const CHAIN_ID = process.env.BLOCKACTION_CHAIN_ID || "1";
 const PAGE_SIZE = 1000;
-const MAX_PAGES = 5;
+const MAX_PAGES = 10;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const REQUEST_INTERVAL_MS = 350;
 const DEFAULT_ANALYSIS_PERIOD = "ytd";
@@ -651,22 +651,35 @@ export function buildPublicWalletData(analytics) {
   };
 }
 
-export async function getWalletData(walletAddress, analysisPeriod = DEFAULT_ANALYSIS_PERIOD) {
+export async function getWalletData(walletAddress, analysisPeriod = DEFAULT_ANALYSIS_PERIOD, customRange = null) {
   const address = walletAddress.toLowerCase();
 
   if (!/^0x[a-f0-9]{40}$/.test(address)) {
     throw new Error("Invalid Ethereum wallet address");
   }
 
-  const normalizedPeriod = normalizeAnalysisPeriod(analysisPeriod);
-  const cacheKey = `${address}:${normalizedPeriod}`;
-  const cachedWallet = walletCache.get(cacheKey);
-  if (cachedWallet?.expiresAt > Date.now()) {
-    return cachedWallet.value;
+  let period, cacheKey = null;
+  if (customRange && customRange.from && customRange.to) {
+    const range = await getDateRange(customRange.from, customRange.to);
+    period = {
+      id: `custom:${customRange.from}:${customRange.to}`,
+      days: Math.max(1, Math.ceil((range.end.getTime() - range.start.getTime()) / 86_400_000)),
+      start: range.start.toISOString(),
+      end: range.end.toISOString(),
+      startBlock: range.startBlock,
+      endBlock: range.endBlock,
+    };
+  } else {
+    const normalizedPeriod = normalizeAnalysisPeriod(analysisPeriod);
+    cacheKey = `${address}:${normalizedPeriod}`;
+    const cachedWallet = walletCache.get(cacheKey);
+    if (cachedWallet?.expiresAt > Date.now()) {
+      return cachedWallet.value;
+    }
+    period = await getAnalysisPeriod(normalizedPeriod);
   }
 
   try {
-    const period = await getAnalysisPeriod(normalizedPeriod);
     const [
       normalResult,
       internalResult,
@@ -706,6 +719,7 @@ export async function getWalletData(walletAddress, analysisPeriod = DEFAULT_ANAL
       nftCollector: walletPersonality.nftCollector,
       trader: walletPersonality.trader,
       defiExplorer: walletPersonality.defiExplorer,
+      holder: walletPersonality.holder,
     });
     const riskScore = calculateRiskScore({
       assets,
@@ -772,10 +786,12 @@ export async function getWalletData(walletAddress, analysisPeriod = DEFAULT_ANAL
 
     const result = buildPublicWalletData(analytics);
 
-    walletCache.set(cacheKey, {
-      value: result,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-    });
+    if (cacheKey) {
+      walletCache.set(cacheKey, {
+        value: result,
+        expiresAt: Date.now() + CACHE_TTL_MS,
+      });
+    }
 
     return result;
   } catch (error) {

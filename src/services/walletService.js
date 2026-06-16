@@ -4,10 +4,11 @@ import { formatCount } from '../utils/formatCount.js'
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 export const ANALYSIS_PERIODS = [
   { value: 'ytd', id: 'ytd', label: 'Year to date', shortLabel: 'YTD', description: 'Activity since January 1' },
-  { value: 1, id: '1d', label: 'Last day', shortLabel: '1D', description: 'Today’s activity' },
+  { value: 1, id: '1d', label: 'Last day', shortLabel: '1D', description: 'Today\'s activity' },
   { value: 7, id: '7d', label: 'Last week', shortLabel: '7D', description: 'Recent activity' },
   { value: 30, id: '30d', label: 'Last 30 days', shortLabel: '30D', description: 'Monthly overview' },
   { value: 365, id: '365d', label: 'Last year', shortLabel: '1Y', description: 'Long-term activity' },
+  { value: 'custom', id: 'custom', label: 'Custom Range', shortLabel: '✱', description: 'Choose specific dates' },
 ]
 const DEFAULT_AVATAR = 'cebc058af93e566c96200932c258f395cbf87ebd.png'
 const VITALIK_ADDRESS = '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
@@ -130,7 +131,7 @@ function buildWallet(address, analytics) {
     ),
     defiExplorer: explanation(
       'Why DeFi Explorer?',
-      'Interactions with recognized Aave, Compound, and 1inch contracts increase this score.',
+      'Interactions with recognized Uniswap, Aave, Compound, and 1inch contracts increase this score.',
       'DeFi Explorer score = recognized DeFi interactions × 3',
       [`${formatNumber(factors.defiInteractions, 0)} recognized DeFi interactions were found.`],
     ),
@@ -305,14 +306,25 @@ function buildWallet(address, analytics) {
   }
 }
 
-async function getWalletByAddress(address, analysisPeriod = 'ytd') {
+async function getWalletByAddress(address, analysisPeriod = 'ytd', customRange = null) {
   const normalizedAddress = address.trim()
 
   if (!/^0x[a-fA-F0-9]{40}$/.test(normalizedAddress)) {
     throw new Error('Enter a valid Ethereum wallet address.')
   }
 
-  const query = analysisPeriod === 'ytd' ? 'period=ytd' : `days=${analysisPeriod}`
+  let query, expectedPeriodId
+  if (analysisPeriod === 'custom' && customRange) {
+    query = `from=${customRange.from}&to=${customRange.to}`
+    expectedPeriodId = `custom:${customRange.from}:${customRange.to}`
+  } else if (analysisPeriod === 'ytd') {
+    query = 'period=ytd'
+    expectedPeriodId = 'ytd'
+  } else {
+    query = `days=${analysisPeriod}`
+    expectedPeriodId = `${analysisPeriod}d`
+  }
+
   const response = await apiFetch(`${API_BASE_URL}/api/wallet/${normalizedAddress}?${query}`)
   const data = await response.json().catch(() => null)
 
@@ -320,7 +332,6 @@ async function getWalletByAddress(address, analysisPeriod = 'ytd') {
     throw new Error(data?.message || 'Unable to fetch wallet analytics.')
   }
 
-  const expectedPeriodId = analysisPeriod === 'ytd' ? 'ytd' : `${analysisPeriod}d`
   if (data?.period?.id !== expectedPeriodId) {
     throw new Error('The API returned stale period data. Restart or deploy the latest backend.')
   }

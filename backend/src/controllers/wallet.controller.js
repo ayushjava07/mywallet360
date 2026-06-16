@@ -7,6 +7,24 @@ const ALLOWED_ANALYSIS_PERIODS = new Set(["ytd"]);
 
 export const getWalletProfile = async (req, res, next) => {
   const { address } = req.params;
+  const { from, to } = req.query;
+
+  if (from && to) {
+    if (!isAddress(address)) {
+      next(new HttpError(400, "INVALID_WALLET_ADDRESS", "Enter a valid Ethereum wallet address."));
+      return;
+    }
+
+    try {
+      const walletData = await getWalletData(address, "custom", { from, to });
+      res.set("Cache-Control", "private, max-age=60, stale-while-revalidate=240");
+      res.json(walletData);
+    } catch (error) {
+      next(error);
+    }
+    return;
+  }
+
   const requestedPeriod = req.query.period || req.query.days || "ytd";
   const analysisPeriod = ALLOWED_ANALYSIS_PERIODS.has(requestedPeriod)
     ? requestedPeriod

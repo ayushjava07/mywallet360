@@ -4,6 +4,7 @@ import { resolveWalletIdentifier } from '../utils/resolveWalletIdentifier'
 
 export function useWalletDashboard() {
   const [analysisDays, setAnalysisDays] = useState('ytd')
+  const [customRange, setCustomRange] = useState(null)
   const [wallet, setWallet] = useState(null)
   const [searchValue, setSearchValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -23,6 +24,7 @@ export function useWalletDashboard() {
     if (isLoadingRef.current) return
 
     const periodChange = options.periodChange === true
+    const range = options.customRange || null
     isLoadingRef.current = true
     if (periodChange) {
       setIsPeriodLoading(true)
@@ -39,9 +41,10 @@ export function useWalletDashboard() {
       setIsResolving(false)
       if (!periodChange) setIsLoading(true)
 
-      const nextWallet = await walletService.getWalletByAddress(resolution.address, days)
+      const nextWallet = await walletService.getWalletByAddress(resolution.address, days, range)
       setWallet(nextWallet)
       setAnalysisDays(days)
+      setCustomRange(range)
     } catch (requestError) {
       setError(requestError.message)
     } finally {
@@ -63,11 +66,11 @@ export function useWalletDashboard() {
     setSearchValue(identifier)
     analyzeWallet(identifier)
   }
-  const selectAnalysisPeriod = (days) => {
+  const selectAnalysisPeriod = (days, range = null) => {
     if (!wallet || isLoadingRef.current) return
 
     setPendingAnalysisDays(days)
-    analyzeWallet(wallet.id, days, { periodChange: true })
+    analyzeWallet(wallet.id, days, { periodChange: true, customRange: range })
   }
 
   useEffect(() => {
@@ -175,6 +178,7 @@ export function useWalletDashboard() {
     pendingAnalysisDays,
     isResolving,
     analysisDays,
+    customRange,
     resolvedIdentifier,
     setSearchValue: updateSearchValue,
     searchWallet,

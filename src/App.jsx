@@ -27,6 +27,7 @@ export default function App() {
     pendingAnalysisDays,
     isResolving,
     analysisDays,
+    customRange,
     resolvedIdentifier,
     setSearchValue,
     searchWallet,
@@ -74,6 +75,7 @@ export default function App() {
                   balance={wallet.balance}
                   periods={ANALYSIS_PERIODS}
                   selectedDays={analysisDays}
+                  customRange={customRange}
                   pendingDays={pendingAnalysisDays}
                   isLoading={isPeriodLoading}
                   error={error}
