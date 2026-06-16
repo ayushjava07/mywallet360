@@ -1,7 +1,7 @@
 import { apiFetch } from '../utils/api.js'
 import { formatCount } from '../utils/formatCount.js'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 export const ANALYSIS_PERIODS = [
   { value: 'ytd', id: 'ytd', label: 'Year to date', shortLabel: 'YTD', description: 'Activity since January 1' },
   { value: 1, id: '1d', label: 'Last day', shortLabel: '1D', description: 'Today’s activity' },
@@ -66,10 +66,10 @@ const formatRelativeTime = (timestamp) => {
 }
 
 const personalityConfig = {
-  nftCollector: { label: 'NFT Collector', icon: '99_918.svg', tone: 'primary' },
-  trader: { label: 'Trader', icon: '99_917.svg', tone: 'blue' },
-  defiExplorer: { label: 'DeFi Explorer', icon: '99_938.svg', tone: 'green' },
-  holder: { label: 'Holder', icon: '99_959.svg', tone: 'green' },
+  nftCollector: { label: 'NFT Collector', icon: '99_918.svg', tone: 'collector' },
+  trader: { label: 'Trader', icon: '99_917.svg', tone: 'trader' },
+  defiExplorer: { label: 'DeFi Explorer', icon: '99_938.svg', tone: 'explorer' },
+  holder: { label: 'Holder', icon: '99_959.svg', tone: 'holder' },
 }
 
 const transactionConfig = (type = '') => {

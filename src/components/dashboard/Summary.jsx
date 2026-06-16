@@ -37,7 +37,7 @@ export function Summary({ flow }) {
       </div>
       <div className="breakdown-section">
         <div className="breakdown-section__heading mb-3 flex items-baseline justify-between gap-3">
-          <strong>Spending Breakdown</strong>
+          <strong>Transaction Breakdown</strong>
           <span>By category</span>
         </div>
         <div className="category-grid grid grid-cols-4 gap-2.5 max-[899px]:grid-cols-2 max-[480px]:grid-cols-1">

@@ -1,6 +1,6 @@
 import { apiFetch } from './api.js'
 
-const API_BASE_URL = import.meta.env?.VITE_API_URL || ''
+const API_BASE_URL = (import.meta.env?.VITE_API_URL || '').replace(/\/$/, '')
 const ETHEREUM_ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
 
 export const getWalletIdentifierType = (input) => {

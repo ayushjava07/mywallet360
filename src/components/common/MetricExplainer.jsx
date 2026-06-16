@@ -3,6 +3,45 @@ import { createPortal } from 'react-dom'
 import { Calculator, CheckCircle2, Info, X } from 'lucide-react'
 
 const OPEN_EVENT = 'metric-explainer:open'
+const GAP = 6
+const ESTIMATED_HEIGHT = 260
+
+function pickPlacement(btnRect, vw, vh) {
+  const panelWidth = Math.min(320, vw - 24)
+
+  const fitsBelow = vh - btnRect.bottom - GAP >= ESTIMATED_HEIGHT
+  const fitsAbove = btnRect.top - GAP >= ESTIMATED_HEIGHT
+
+  let placement, top
+
+  if (fitsBelow) {
+    placement = 'below'
+    top = btnRect.bottom + GAP
+  } else if (fitsAbove) {
+    placement = 'above'
+    top = btnRect.top - GAP - ESTIMATED_HEIGHT
+  } else if (vh - btnRect.bottom >= btnRect.top) {
+    placement = 'below'
+    top = btnRect.bottom + GAP
+  } else {
+    placement = 'above'
+    top = Math.max(12, btnRect.top - GAP - ESTIMATED_HEIGHT)
+  }
+
+  if (placement === 'below') {
+    top = Math.min(top, vh - ESTIMATED_HEIGHT - 12)
+  } else {
+    top = Math.max(12, top)
+  }
+
+  let left = btnRect.left + btnRect.width / 2 - panelWidth / 2
+  left = Math.max(12, Math.min(left, vw - panelWidth - 12))
+
+  const buttonCenterX = btnRect.left + btnRect.width / 2
+  const arrowX = buttonCenterX - left
+
+  return { left, top, width: panelWidth, placement, arrowX }
+}
 
 export function MetricExplainer({
   as = 'article',
@@ -20,19 +59,18 @@ export function MetricExplainer({
   const isOpen = Boolean(position)
 
   const open = () => {
-    const rect = triggerRef.current.getBoundingClientRect()
-    const mobile = window.innerWidth <= 700
-    const width = Math.min(320, window.innerWidth - 24)
-    const left = Math.min(Math.max(12, rect.left + rect.width / 2 - width / 2), window.innerWidth - width - 12)
-    const fitsBelow = rect.bottom + 230 < window.innerHeight
+    const btn = buttonRef.current
+    if (!btn) return
 
-    setPosition({
-      left,
-      top: fitsBelow ? rect.bottom + 10 : Math.max(12, rect.top - 10),
-      width,
-      placement: fitsBelow ? 'below' : 'above',
-      mode: mobile ? 'sheet' : 'popover',
-    })
+    const mobile = window.innerWidth <= 700
+    if (mobile) {
+      setPosition({ mode: 'sheet', placement: 'bottom' })
+      window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: panelId }))
+      return
+    }
+
+    const pos = pickPlacement(btn.getBoundingClientRect(), window.innerWidth, window.innerHeight)
+    setPosition({ ...pos, mode: 'popover' })
     window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: panelId }))
   }
 
@@ -40,7 +78,7 @@ export function MetricExplainer({
     setPosition(null)
     if (restoreFocus) requestAnimationFrame(() => buttonRef.current?.focus())
   }
-  const toggle = () => isOpen ? close() : open()
+  const toggle = () => (isOpen ? close() : open())
 
   useEffect(() => {
     if (!explanation) return undefined
@@ -99,7 +137,7 @@ export function MetricExplainer({
       aria-label={`Explain ${explanation.title}`}
       onClick={toggle}
     >
-      <Info aria-hidden="true" /><small>Why?</small>
+      <Info aria-hidden="true" />
     </button>
   ))
 
@@ -116,7 +154,12 @@ export function MetricExplainer({
             role="dialog"
             aria-modal={position.mode === 'sheet' ? 'true' : undefined}
             aria-labelledby={titleId}
-            style={position.mode === 'popover' ? { left: position.left, top: position.top, width: position.width } : undefined}
+            style={position.mode === 'popover' ? {
+              left: position.left,
+              top: position.top,
+              width: position.width,
+              '--arrow-x': `${position.arrowX}px`,
+            } : undefined}
           >
             <span className="metric-explanation__handle" aria-hidden="true" />
             <div className="metric-explanation__heading">
