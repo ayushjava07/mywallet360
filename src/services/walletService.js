@@ -66,10 +66,10 @@ const formatRelativeTime = (timestamp) => {
 }
 
 const personalityConfig = {
-  nftCollector: { label: 'NFT Collector', icon: '99_918.svg', tone: 'primary' },
-  trader: { label: 'Trader', icon: '99_917.svg', tone: 'blue' },
-  defiExplorer: { label: 'DeFi Explorer', icon: '99_938.svg', tone: 'green' },
-  holder: { label: 'Holder', icon: '99_959.svg', tone: 'green' },
+  nftCollector: { label: 'NFT Collector', icon: '99_918.svg', tone: 'collector' },
+  trader: { label: 'Trader', icon: '99_917.svg', tone: 'trader' },
+  defiExplorer: { label: 'DeFi Explorer', icon: '99_938.svg', tone: 'explorer' },
+  holder: { label: 'Holder', icon: '99_959.svg', tone: 'holder' },
 }
 
 const transactionConfig = (type = '') => {

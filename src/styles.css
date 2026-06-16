@@ -31,6 +31,11 @@
   --teal-dark: var(--accent);
   --green: #238b70;
   --red: #cf6570;
+  --segment-remaining: #cbd5e1;
+  --tone-trader: #10b981;
+  --tone-collector: #8b5cf6;
+  --tone-explorer: #f59e0b;
+  --tone-holder: #94a3b8;
   --radius: 26px;
   font-family: Inter, system-ui, sans-serif;
   color: var(--ink);
@@ -54,6 +59,11 @@ html[data-theme="dark"] {
   --shadow: rgba(0,0,0,.34);
   --green: #48d6a3;
   --red: #fb8793;
+  --segment-remaining: #475569;
+  --tone-trader: #34d399;
+  --tone-collector: #a78bfa;
+  --tone-explorer: #fbbf24;
+  --tone-holder: #64748b;
 }
 
 ::view-transition-old(root),
@@ -281,15 +291,18 @@ h1, h2, h3 { color: var(--ink); font-weight: 800; letter-spacing: -.035em; }
 .personality-card__eyebrow { color: var(--accent); font-size: 10px; font-weight: 750; letter-spacing: .01em; }
 .personality-card__intro h2 { font-size: 26px; letter-spacing: -.05em; }
 .personality-card__intro p { max-width: 250px; margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.55; }
-.personality-orbit { width: 82px; height: 82px; padding: 7px; border-radius: 50%; background: conic-gradient(var(--primary) 0 70%, var(--secondary) 70% 90%, var(--accent) 90%); box-shadow: 0 8px 22px rgba(44,122,123,.14), 0 0 0 7px rgba(87,214,207,.045); }
-.personality-orbit div { width: 100%; height: 100%; display: grid; place-content: center; gap: 2px; text-align: center; border-radius: 50%; background: rgba(255,255,255,.95); }
-.personality-orbit strong { font-size: 19px; letter-spacing: -.05em; }
-.personality-orbit span { color: var(--muted); font-size: 6px; font-weight: 750; letter-spacing: .02em; }
-.personality-item { --personality-color: var(--primary); background: #f7f9f9; box-shadow: none; }
-.personality-item--primary { --personality-color: #57d6cf; }
-.personality-item--blue { --personality-color: #3cb8b1; }
-.personality-item--green { --personality-color: #2c7a7b; }
-.personality-item__icon { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 12px; background: color-mix(in srgb, var(--personality-color) 12%, #fff); }
+.personality-orbit { width: 96px; height: 96px; padding: 8px; border-radius: 50%; background: conic-gradient(var(--primary) 0 70%, var(--segment-remaining) 70% 90%, var(--segment-remaining) 90%); box-shadow: 0 8px 22px color-mix(in srgb, var(--orbit-glow, #18c5c0) 18%, transparent), 0 0 0 7px color-mix(in srgb, var(--orbit-glow, #18c5c0) 6%, transparent); }
+.personality-orbit div { width: 100%; height: 100%; display: grid; place-content: center; gap: 3px; text-align: center; border-radius: 50%; background: rgba(255,255,255,.95); }
+.personality-orbit strong { font-size: 24px; letter-spacing: -.055em; line-height: 1; }
+.personality-orbit span { color: var(--muted); font-size: 7px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.personality-item { --personality-color: var(--tone-holder); border-radius: 14px; background: #f8f9fb; box-shadow: none; transition: background .2s ease; }
+.personality-item--trader { --personality-color: var(--tone-trader); }
+.personality-item--collector { --personality-color: var(--tone-collector); }
+.personality-item--explorer { --personality-color: var(--tone-explorer); }
+.personality-item--holder { --personality-color: var(--tone-holder); }
+.personality-item:first-child { background: color-mix(in srgb, var(--personality-color) 7%, #fff); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--personality-color) 10%, transparent); }
+.personality-item:not(:first-child) { opacity: .82; }
+.personality-item__icon { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--personality-color) 11%, #fff); }
 .personality-item__icon .icon { width: 19px; height: 19px; }
 .personality-item__heading strong { font-size: 13px; }
 .personality-item__heading span { color: var(--personality-color); font-size: 15px; font-weight: 800; }
@@ -647,6 +660,7 @@ html[data-theme="dark"] .ai-insight,
 html[data-theme="dark"] .breakdown,
 html[data-theme="dark"] .highlight-item,
 html[data-theme="dark"] .portfolio-metric { background: var(--elevated); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); }
+html[data-theme="dark"] .personality-item:first-child { background: color-mix(in srgb, var(--personality-color) 14%, var(--elevated)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--personality-color) 16%, transparent); }
 html[data-theme="dark"] .portfolio-metric--primary,
 html[data-theme="dark"] .score-bar,
 html[data-theme="dark"] .ai-insight--highlighted { background: linear-gradient(145deg, rgba(32,211,204,.12), #1e2633); box-shadow: inset 0 0 0 1px rgba(32,211,204,.1); }
@@ -661,19 +675,19 @@ html[data-theme="dark"] .highlight-item__icon svg { stroke-width: 2.2; filter: b
 html[data-theme="dark"] .personality-orbit div,
 html[data-theme="dark"] .donut div { background: var(--card); }
 html[data-theme="dark"] .donut div { border-color: #202b38; }
-html[data-theme="dark"] .personality-orbit { box-shadow: 0 8px 24px rgba(32,211,204,.2), 0 0 0 7px rgba(32,211,204,.07); }
+html[data-theme="dark"] .personality-orbit { box-shadow: 0 8px 24px color-mix(in srgb, var(--orbit-glow, #20d3cc) 22%, transparent), 0 0 0 7px color-mix(in srgb, var(--orbit-glow, #20d3cc) 7%, transparent); }
 
 html[data-theme="dark"] .balance-card { background: radial-gradient(circle at 50% 43%, rgba(255,255,255,.12), transparent 25%), radial-gradient(circle at 96% 100%, rgba(2,60,58,.5), transparent 38%), linear-gradient(135deg, #1ed6cf 0%, #0fa8a3 55%, #0a6f6b 100%); box-shadow: 0 26px 62px rgba(32,211,204,.18), inset 0 1px 0 rgba(255,255,255,.28); }
 html[data-theme="dark"] .balance-stat { background: rgba(8,71,70,.32); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 8px 24px rgba(0,0,0,.12); }
 
 html[data-theme="dark"] .progress,
 html[data-theme="dark"] .category-progress,
-html[data-theme="dark"] .personality-meter,
 html[data-theme="dark"] .score-bar__meter { background: rgba(255,255,255,.1); }
+html[data-theme="dark"] .personality-meter { background: color-mix(in srgb, var(--personality-color) 18%, rgba(255,255,255,.06)); }
 html[data-theme="dark"] .category-card .icon-box,
 html[data-theme="dark"] .highlight-item__icon,
 html[data-theme="dark"] .personality-item__icon,
-html[data-theme="dark"] .ai-insight__icon { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: color-mix(in srgb, currentColor 18%, #1e2633); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+html[data-theme="dark"] .ai-insight__icon { border: 1px solid color-mix(in srgb, var(--personality-color, currentColor) 25%, transparent); background: color-mix(in srgb, var(--personality-color, currentColor) 18%, #1e2633); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
 html[data-theme="dark"] .insight-card .icon-box { border: 1px solid rgba(32,211,204,.18); color: #74f5ec; background: linear-gradient(145deg, #243645, #1b2935); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 6px 16px rgba(0,0,0,.22); }
 html[data-theme="dark"] .category-card .icon,
 html[data-theme="dark"] .personality-item__icon .icon,
@@ -820,7 +834,7 @@ html[data-theme="dark"] .bottom-nav button.active > span .icon { filter: brightn
   .personality-card { @apply grid-cols-1 gap-4; }
   .personality-card__intro { @apply pr-0; }
   .personality-card__title { gap: 12px; }
-  .personality-orbit { width: 72px; height: 72px; }
+  .personality-orbit { width: 80px; height: 80px; }
   .ai-card { @apply grid-cols-1 gap-4; }
   .ai-card__lead { padding: 0 0 16px; border-right: 0; border-bottom: 1px solid var(--line); }
   .ai-card__lead p { margin-top: 15px; }
