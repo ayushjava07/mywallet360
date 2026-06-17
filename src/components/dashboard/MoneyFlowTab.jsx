@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { MaterialIcon } from '../common/MaterialIcon'
 import { Icon } from '../common/Icon'
 import { MetricExplainer } from '../common/MetricExplainer'
 import { highlightIcons } from '../../config/dashboard'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
+import { TransactionModal } from './TransactionModal'
 
 function formatPeriod(periodLabel) {
   const d = new Date()
@@ -132,6 +134,7 @@ export function MoneyFlowTab({ wallet }) {
   })
   const groupOrder = ['Today', 'Yesterday', 'This Week', 'Older']
   const groupedTransactions = groupOrder.filter(g => groups[g]).map(date => ({ date, items: groups[date] }))
+  const [selectedTx, setSelectedTx] = useState(null)
 
   return (
     <div className="grid gap-9 max-[700px]:gap-6">
@@ -427,6 +430,9 @@ export function MoneyFlowTab({ wallet }) {
                         key={tx.title}
                         className={`transaction transaction--${tx.tone} relative grid min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto_minmax(72px,auto)] items-center gap-[11px] rounded-[14px] border-0 bg-transparent p-[13px_11px] max-[1050px]:grid-cols-[auto_minmax(0,1fr)_auto] max-[700px]:grid-cols-[auto_minmax(0,1fr)] max-[480px]:gap-[9px] max-[480px]:p-[9px_7px]`}
                         tabIndex="0"
+                        role="button"
+                        onClick={() => setSelectedTx(tx)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedTx(tx) } }}
                       >
                         <div className="transaction__visual">
                           <span className={`icon-box ${tx.tone}`}><Icon name={tx.icon} alt="" /></span>
@@ -491,6 +497,7 @@ export function MoneyFlowTab({ wallet }) {
           </div>
         )}
       </section>
+      {selectedTx && <TransactionModal tx={selectedTx} onClose={() => setSelectedTx(null)} />}
     </div>
   )
 }
