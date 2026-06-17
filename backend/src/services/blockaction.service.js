@@ -624,6 +624,13 @@ export async function getTransactionReportData(walletAddress, from, to) {
 }
 
 export function buildPublicWalletData(analytics) {
+  const pricedAssets = (analytics.pricedAssets || []).map((asset) => ({
+    contractAddress: asset.contractAddress,
+    symbol: asset.symbol,
+    name: asset.name,
+    balance: asset.balance,
+    usdValue: asset.usdValue,
+  }))
   return {
     netWorth: analytics.netWorth,
     assetCount: analytics.assetCount,
@@ -631,6 +638,7 @@ export function buildPublicWalletData(analytics) {
     transactionCount: analytics.transactionCount,
     transactionCountIsLowerBound: analytics.transactionCountIsLowerBound,
     largestHolding: analytics.largestHolding,
+    assets: pricedAssets,
     moneyFlow: analytics.moneyFlow,
     personality: analytics.personality,
     personalityFactors: analytics.personalityFactors,
@@ -743,6 +751,7 @@ export async function getWalletData(walletAddress, analysisPeriod = DEFAULT_ANAL
       transactionCount: normalTransactions.length,
       transactionCountIsLowerBound: !normalResult.complete,
       largestHolding: buildLargestHolding(pricedAssets),
+      pricedAssets,
       moneyFlow,
       personality,
       personalityFactors: personalityDetails.factors,

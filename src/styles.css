@@ -798,6 +798,264 @@ html[data-theme="dark"] .bottom-nav button.active { color: #f4fffe; }
 html[data-theme="dark"] .bottom-nav button.active > span { color: #fff; background: linear-gradient(145deg, #28d9d0, #0e9d99); box-shadow: 0 0 24px rgba(32,211,204,.34), inset 0 1px 0 rgba(255,255,255,.3); }
 html[data-theme="dark"] .bottom-nav button.active > span .icon { filter: brightness(1.65) saturate(1.15); opacity: 1; }
 
+.holdings-card {
+  padding: 28px;
+}
+.holdings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.holdings-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.holdings-header-left h2 {
+  font-size: 17px;
+  letter-spacing: -.035em;
+}
+.holdings-count {
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+.holdings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  gap: 24px;
+  align-items: start;
+}
+.holdings-list {
+  display: grid;
+  gap: 2px;
+}
+.holdings-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  transition: background .18s ease, transform .18s ease;
+}
+.holdings-row:hover {
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+  transform: translateX(2px);
+}
+.holdings-token-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(0,0,0,.1);
+}
+.holdings-row-info {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.holdings-row-info strong {
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.holdings-row-info span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.holdings-row-values {
+  text-align: right;
+  display: grid;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.holdings-row-values strong {
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+.holdings-row-values span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 650;
+}
+.holdings-bar-track {
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  overflow: hidden;
+}
+.holdings-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  transition: width .4s ease;
+}
+.holdings-donut-wrap {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+}
+.holdings-donut-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  display: grid;
+  gap: 2px;
+}
+.holdings-donut-center strong {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+.holdings-donut-center span {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.holdings-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.holdings-empty-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.holdings-empty strong {
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -.02em;
+}
+.holdings-empty span {
+  max-width: 260px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.holdings-skeleton-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 80px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+}
+.holdings-skeleton-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  animation: holdings-shimmer 1.4s ease infinite;
+}
+.holdings-skeleton-lines {
+  display: grid;
+  gap: 6px;
+}
+.holdings-skeleton-lines--right {
+  text-align: right;
+  align-items: end;
+}
+.holdings-skeleton-line {
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  animation: holdings-shimmer 1.4s ease infinite;
+}
+.holdings-skeleton-line--short { width: 50px; }
+.holdings-skeleton-line--medium { width: 70px; }
+.holdings-skeleton-line--long { width: 90px; }
+.holdings-skeleton-bar {
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  animation: holdings-shimmer 1.4s ease infinite;
+}
+@keyframes holdings-shimmer {
+  0% { opacity: .6; }
+  50% { opacity: 1; }
+  100% { opacity: .6; }
+}
+
+html[data-theme="dark"] .holdings-row:hover {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+html[data-theme="dark"] .holdings-token-icon {
+  box-shadow: 0 3px 10px rgba(0,0,0,.25);
+}
+html[data-theme="dark"] .holdings-count {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+@media (max-width: 700px) {
+  .holdings-layout {
+    grid-template-columns: 1fr;
+  }
+  .holdings-donut-wrap {
+    justify-self: center;
+    width: 170px;
+    height: 170px;
+  }
+  .holdings-card {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .holdings-card {
+    padding: 14px;
+  }
+  .holdings-header-left h2 {
+    font-size: 15px;
+  }
+  .holdings-donut-wrap {
+    width: 150px;
+    height: 150px;
+  }
+  .holdings-donut-center strong {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .holdings-card {
+    padding: 12px;
+  }
+}
+
 @media (min-width: 900px) {
   .dashboard-grid--top { @apply grid-cols-2; }
   .identity-card, .personality-card { @apply col-span-full; }

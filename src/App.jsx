@@ -6,6 +6,7 @@ import { IdentityCard } from './components/dashboard/IdentityCard'
 import { Insights } from './components/dashboard/Insights'
 import { MoneyFlowTab } from './components/dashboard/MoneyFlowTab'
 import { PortfolioCard } from './components/dashboard/PortfolioCard'
+import { PortfolioHoldings } from './components/dashboard/PortfolioHoldings'
 import { Summary } from './components/dashboard/Summary'
 import { WalletPersonality } from './components/dashboard/WalletPersonality'
 import { BottomNav } from './components/layout/BottomNav'
@@ -89,6 +90,10 @@ export default function App() {
                 <IdentityCard stats={wallet.identity} />
                 <WalletPersonality personality={wallet.personality} />
               </div>
+              <PortfolioHoldings
+                holdings={wallet.holdings}
+                isLoading={isLoading}
+              />
               <Summary flow={wallet.flow} />
               <Activity
                 walletAddress={wallet.id}
