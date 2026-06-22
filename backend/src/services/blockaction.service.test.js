@@ -69,7 +69,7 @@ test("wallet API response excludes large internal collections", () => {
   assert.equal(response.mostUsedProtocol.unrecognizedCount, 1);
   assert.deepEqual(response.valuationHistory, [{ date: "2026-06-01", value: 12 }]);
   assert.equal(typeof response.generatedAt, "string");
-  assert.equal("assets" in response, false);
+  assert.equal("assets" in response, true);
   assert.equal("nfts" in response, false);
   assert.equal("topAssets" in response, false);
   assert.equal("topNfts" in response, false);

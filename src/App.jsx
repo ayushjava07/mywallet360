@@ -91,6 +91,8 @@ export default function App() {
                 <BalanceCard
                   balance={wallet.balance}
                   error={error}
+                  displayMode={displayMode}
+                  ethPrice={wallet.ethPrice}
                 />
                 <PortfolioCard portfolio={wallet.portfolio} />
                 <IdentityCard stats={wallet.identity} />
@@ -103,6 +105,7 @@ export default function App() {
                 periodLabel={wallet.periodLabel}
                 isLoading={isLoading}
                 displayMode={displayMode}
+                ethPrice={wallet.ethPrice}
               />
               <Summary flow={wallet.flow} />
               <Activity

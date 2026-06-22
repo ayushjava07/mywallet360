@@ -125,9 +125,10 @@ function renderActiveShape(props) {
   )
 }
 
-export function PortfolioHoldings({ holdings, totalValue, valuationHistory, periodLabel, isLoading, displayMode }) {
+export function PortfolioHoldings({ holdings, totalValue, valuationHistory, periodLabel, isLoading, displayMode, ethPrice }) {
   const [hoveredSymbol, setHoveredSymbol] = useState(null)
   const [hoveredLegend, setHoveredLegend] = useState(null)
+  const [showAllTokens, setShowAllTokens] = useState(false)
 
   const activeSymbol = hoveredSymbol || hoveredLegend
 
@@ -144,29 +145,41 @@ export function PortfolioHoldings({ holdings, totalValue, valuationHistory, peri
     return [...holdings].sort((a, b) => (b.rawUsdValue || 0) - (a.rawUsdValue || 0))
   }, [holdings])
 
+  const pricedHoldings = useMemo(() => sorted.filter((a) => a.priceAvailable), [sorted])
+  const unpricedHoldings = useMemo(() => sorted.filter((a) => !a.priceAvailable), [sorted])
+
   const totalRaw = useMemo(() => {
-    return sorted.reduce((sum, a) => sum + (a.rawUsdValue || 0), 0)
-  }, [sorted])
+    return pricedHoldings.reduce((sum, a) => sum + (a.rawUsdValue || 0), 0)
+  }, [pricedHoldings])
+
+  const formatValue = useCallback((v) => {
+    if (displayMode === 'tokens' && ethPrice) {
+      const ethVal = v / ethPrice
+      if (ethVal >= 1000) return `${(ethVal / 1000).toFixed(2)}K ETH`
+      return `${ethVal.toFixed(4)} ETH`
+    }
+    return formatCompact(v)
+  }, [displayMode, ethPrice])
 
   const donutData = useMemo(() => {
-    return sorted.slice(0, 8).map((h, i) => ({
+    return pricedHoldings.slice(0, 8).map((h, i) => ({
       name: h.symbol,
       rawValue: h.rawUsdValue || 0,
       fill: TOKEN_COLORS[i % TOKEN_COLORS.length],
       percent: h.percentage,
     }))
-  }, [sorted])
+  }, [pricedHoldings])
 
   const insights = useMemo(() => {
-    if (sorted.length === 0) return null
-    const largest = sorted[0]
+    if (pricedHoldings.length === 0) return null
+    const largest = pricedHoldings[0]
     const largestPct = largest.percentage || 0
-    const stablecoinPct = sorted
+    const stablecoinPct = pricedHoldings
       .filter((a) => STABLECOIN_SYMBOLS.has(a.symbol))
       .reduce((sum, a) => sum + (a.percentage || 0), 0)
     let diversification
     let diversificationTone
-    if (sorted.length <= 2 || largestPct > 50) {
+    if (pricedHoldings.length <= 2 || largestPct > 50) {
       diversification = 'Low'
       diversificationTone = 'red'
     } else if (largestPct > 25) {
@@ -176,8 +189,8 @@ export function PortfolioHoldings({ holdings, totalValue, valuationHistory, peri
       diversification = 'High'
       diversificationTone = 'green'
     }
-    return { largest, largestPct, stablecoinPct, count: sorted.length, diversification, diversificationTone }
-  }, [sorted])
+    return { largest, largestPct, stablecoinPct, count: pricedHoldings.length, totalCount: sorted.length, diversification, diversificationTone }
+  }, [pricedHoldings, sorted.length])
 
   const handleSymbolHover = useCallback((symbol) => {
     setHoveredSymbol(symbol)
@@ -190,11 +203,10 @@ export function PortfolioHoldings({ holdings, totalValue, valuationHistory, peri
   const centerData = useMemo(() => {
     if (activeSymbol && donutData.length > 0) {
       const match = donutData.find((d) => d.name === activeSymbol)
-      if (match) return { value: formatCompact(match.rawValue), label: match.name }
+      if (match) return { value: formatValue(match.rawValue), label: match.name }
     }
-    const rawTotal = sorted.reduce((sum, a) => sum + (a.rawUsdValue || 0), 0)
-    return { value: formatCompact(rawTotal), label: 'Total Value' }
-  }, [activeSymbol, donutData, sorted])
+    return { value: formatValue(totalRaw), label: 'Total Value' }
+  }, [activeSymbol, donutData, totalRaw, formatValue])
 
   if (isLoading) {
     return (
@@ -247,7 +259,10 @@ export function PortfolioHoldings({ holdings, totalValue, valuationHistory, peri
       </div>
 
       <div className="holdings-total">
-        <strong>{totalValue || formatCompact(totalRaw)}</strong>
+        <strong>{formatValue(totalRaw)}</strong>
+        {unpricedHoldings.length > 0 && (
+          <span className="holdings-total-sub">{pricedHoldings.length} priced · {unpricedHoldings.length} unpriced</span>
+        )}
       </div>
 
       {insights && (
@@ -265,7 +280,7 @@ export function PortfolioHoldings({ holdings, totalValue, valuationHistory, peri
                 <line x1="12" y1="17" x2="12" y2="21" />
               </svg>
             }
-            value={<CountUp value={insights.count} />}
+            value={<CountUp value={insights.totalCount} />}
             label="Total Assets"
           />
           <InsightCard
@@ -298,35 +313,49 @@ export function PortfolioHoldings({ holdings, totalValue, valuationHistory, peri
           <div className="holdings-donut-wrap">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={donutData}
-                  dataKey="rawValue"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={58}
-                  outerRadius={84}
-                  activeIndex={activeSymbol ? donutData.findIndex((d) => d.name === activeSymbol) : undefined}
-                  activeShape={renderActiveShape}
-                  strokeWidth={0}
-                  onMouseEnter={(_, index) => setHoveredSymbol(donutData[index]?.name)}
-                  onMouseLeave={handleSymbolLeave}
-                  animationBegin={0}
-                  animationDuration={600}
-                  animationEasing="ease-out"
-                >
-                  {donutData.map((entry, i) => (
-                    <Cell
-                      key={`cell-${i}`}
-                      fill={entry.fill}
-                      style={{
-                        filter: activeSymbol && activeSymbol !== entry.name ? 'saturate(0.4) opacity(0.6)' : 'none',
-                        transition: 'filter .25s ease, opacity .25s ease',
-                        cursor: 'pointer',
-                      }}
-                    />
-                  ))}
-                </Pie>
+                {donutData.length > 0 ? (
+                  <Pie
+                    data={donutData}
+                    dataKey="rawValue"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={58}
+                    outerRadius={84}
+                    activeIndex={activeSymbol ? donutData.findIndex((d) => d.name === activeSymbol) : undefined}
+                    activeShape={renderActiveShape}
+                    strokeWidth={0}
+                    onMouseEnter={(_, index) => setHoveredSymbol(donutData[index]?.name)}
+                    onMouseLeave={handleSymbolLeave}
+                    animationBegin={0}
+                    animationDuration={600}
+                    animationEasing="ease-out"
+                  >
+                    {donutData.map((entry, i) => (
+                      <Cell
+                        key={`cell-${i}`}
+                        fill={entry.fill}
+                        style={{
+                          filter: activeSymbol && activeSymbol !== entry.name ? 'saturate(0.4) opacity(0.6)' : 'none',
+                          transition: 'filter .25s ease, opacity .25s ease',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    ))}
+                  </Pie>
+                ) : (
+                  <Pie
+                    data={[{ name: 'No Data', rawValue: 1 }]}
+                    dataKey="rawValue"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={58}
+                    outerRadius={84}
+                    strokeWidth={0}
+                    fill="var(--line)"
+                  />
+                )}
               </PieChart>
             </ResponsiveContainer>
             <div className="holdings-donut-center">
@@ -354,11 +383,11 @@ export function PortfolioHoldings({ holdings, totalValue, valuationHistory, peri
           <div className="holdings-list-header">
             <span>Asset</span>
             <span>Balance</span>
-            <span>{displayMode === 'tokens' ? 'Amount' : 'Value'}</span>
+            <span>{displayMode === 'tokens' ? 'Value (ETH)' : 'Value'}</span>
             <span>Allocation</span>
           </div>
           <div className="holdings-list">
-            {sorted.map((asset) => {
+            {pricedHoldings.map((asset) => {
               const isHighlighted = activeSymbol === asset.symbol
               return (
                 <div
@@ -375,7 +404,9 @@ export function PortfolioHoldings({ holdings, totalValue, valuationHistory, peri
                     </div>
                   </div>
                   <span className="holdings-row-balance">{asset.balance}</span>
-                  <strong className="holdings-row-value">{displayMode === 'tokens' ? `${asset.rawBalance} ${asset.symbol}` : asset.usdValue}</strong>
+                  <strong className="holdings-row-value">
+                    {displayMode === 'tokens' && ethPrice ? `${((asset.rawUsdValue || 0) / ethPrice).toFixed(4)} ETH` : asset.usdValue}
+                  </strong>
                   <div className="holdings-row-allocation">
                     <AllocationBar percent={asset.percentage} highlight={isHighlighted} />
                     <span className="holdings-row-pct">{asset.percentage}%</span>
@@ -384,6 +415,46 @@ export function PortfolioHoldings({ holdings, totalValue, valuationHistory, peri
               )
             })}
           </div>
+
+          {unpricedHoldings.length > 0 && (
+            <div className="holdings-other">
+              <button
+                className="holdings-other-toggle"
+                onClick={() => setShowAllTokens(!showAllTokens)}
+              >
+                <span>{showAllTokens ? 'Hide' : 'Show'} {unpricedHoldings.length} other token{unpricedHoldings.length > 1 ? 's' : ''}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ transform: showAllTokens ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform .2s ease' }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              {showAllTokens && (
+                <div className="holdings-list">
+                  {unpricedHoldings.map((asset) => (
+                    <div
+                      className="holdings-row holdings-row--unpriced"
+                      key={`${asset.contractAddress || 'unk'}-${asset.symbol}`}
+                    >
+                      <div className="holdings-row-asset">
+                        <TokenIcon symbol={asset.symbol} />
+                        <div className="holdings-row-asset-info">
+                          <strong>{asset.symbol}</strong>
+                          <span className="holdings-row-name">{asset.name || 'Unknown Token'}</span>
+                        </div>
+                      </div>
+                      <span className="holdings-row-balance holdings-row-balance--raw">{asset.displayBalance || asset.balance}</span>
+                      <strong className="holdings-row-value holdings-row-value--unpriced">—</strong>
+                      <div className="holdings-row-allocation">
+                        <AllocationBar percent={0} />
+                        <span className="holdings-row-pct">—</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </section>

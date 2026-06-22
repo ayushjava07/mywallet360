@@ -314,6 +314,7 @@ function buildAssets(tokenTransfers, ethBalance, ethPrice, address) {
         contractAddress: asset.contractAddress,
         symbol: asset.symbol,
         name: asset.name,
+        rawBalance: balance,
         balance: round(balance, 8),
         usdValue: round(usdValue, 2),
         priceAvailable: isUsdPegged || isEthEquivalent,
@@ -324,6 +325,7 @@ function buildAssets(tokenTransfers, ethBalance, ethPrice, address) {
     contractAddress: null,
     symbol: "ETH",
     name: "Ether",
+    rawBalance: ethBalance,
     balance: round(ethBalance, 8),
     usdValue: round(ethBalance * ethPrice, 2),
     priceAvailable: true,
@@ -624,21 +626,26 @@ export async function getTransactionReportData(walletAddress, from, to) {
 }
 
 export function buildPublicWalletData(analytics) {
-  const pricedAssets = (analytics.pricedAssets || []).map((asset) => ({
+  const allAssets = (analytics.assets || []).map((asset) => ({
     contractAddress: asset.contractAddress,
     symbol: asset.symbol,
     name: asset.name,
+    rawBalance: asset.rawBalance,
     balance: asset.balance,
     usdValue: asset.usdValue,
+    priceAvailable: asset.priceAvailable,
   }))
+  const pricedCount = allAssets.filter((a) => a.priceAvailable).length;
   return {
     netWorth: analytics.netWorth,
+    ethPrice: analytics.ethPrice,
     assetCount: analytics.assetCount,
+    pricedAssetCount: pricedCount,
     nftCount: analytics.nftCount,
     transactionCount: analytics.transactionCount,
     transactionCountIsLowerBound: analytics.transactionCountIsLowerBound,
     largestHolding: analytics.largestHolding,
-    assets: pricedAssets,
+    assets: allAssets,
     moneyFlow: analytics.moneyFlow,
     personality: analytics.personality,
     personalityFactors: analytics.personalityFactors,
@@ -746,12 +753,13 @@ export async function getWalletData(walletAddress, analysisPeriod = DEFAULT_ANAL
     });
     const analytics = {
       netWorth,
+      ethPrice,
       assetCount: assets.length,
       nftCount: nfts.reduce((sum, nft) => sum + nft.amount, 0),
       transactionCount: normalTransactions.length,
       transactionCountIsLowerBound: !normalResult.complete,
       largestHolding: buildLargestHolding(pricedAssets),
-      pricedAssets,
+      assets,
       moneyFlow,
       personality,
       personalityFactors: personalityDetails.factors,

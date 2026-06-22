@@ -42,13 +42,44 @@ function buildHumanExplanation(tx) {
   return `${tx.displayTitle || 'A transaction'} was processed on the Ethereum network.`
 }
 
-export function TransactionModal({ tx, onClose }) {
+export function TransactionModal({ tx, onClose, onNoteSave }) {
   const panelRef = useRef(null)
   const startY = useRef(0)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [copiedHash, setCopiedHash] = useState(false)
   const [copiedFrom, setCopiedFrom] = useState(false)
   const [copiedTo, setCopiedTo] = useState(false)
+  const [noteInput, setNoteInput] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mywallet360_tx_notes') || '{}')
+      return saved[tx.title] || ''
+    } catch {
+      return ''
+    }
+  })
+  const [isSaved, setIsSaved] = useState(false)
+
+  const PRESET_TAGS = ['Salary', 'Donation', 'Transfer', 'Investment', 'Expense', 'Tax-deductible']
+
+  const handleSaveNote = (newNote) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mywallet360_tx_notes') || '{}')
+      const val = newNote.trim()
+      if (val) {
+        saved[tx.title] = val
+      } else {
+        delete saved[tx.title]
+      }
+      localStorage.setItem('mywallet360_tx_notes', JSON.stringify(saved))
+      setIsSaved(true)
+      setTimeout(() => setIsSaved(false), 2000)
+      if (onNoteSave) {
+        onNoteSave(tx.title, val)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -159,6 +190,41 @@ export function TransactionModal({ tx, onClose }) {
               <span>Transaction Type</span>
               <strong>{tx.displayTitle}</strong>
             </div>
+          </div>
+        </div>
+
+        <div className="tx-modal__section tx-modal__notes">
+          <h3>Private Notes &amp; Tags</h3>
+          <div className="tx-modal__note-input-container">
+            <input
+              type="text"
+              className="tx-modal__note-input"
+              placeholder="Add a private note (e.g. salary, donation...)"
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+            />
+            <button
+              type="button"
+              className="tx-modal__note-save-btn"
+              onClick={() => handleSaveNote(noteInput)}
+            >
+              {isSaved ? 'Saved ✔' : 'Save'}
+            </button>
+          </div>
+          <div className="tx-modal__presets">
+            {PRESET_TAGS.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className={`tx-modal__preset-chip ${noteInput === tag ? 'active' : ''}`}
+                onClick={() => {
+                  setNoteInput(tag)
+                  handleSaveNote(tag)
+                }}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
         </div>
 

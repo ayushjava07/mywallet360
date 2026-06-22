@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { TrendingUp } from 'lucide-react'
 import { metricIcons } from '../../config/dashboard'
@@ -22,7 +23,32 @@ function ValueTooltip({ active, payload }) {
   )
 }
 
-export function BalanceCard({ balance, error }) {
+export function BalanceCard({ balance, error, displayMode, ethPrice }) {
+  const isTokens = displayMode === 'tokens'
+
+  const displayValue = useMemo(() => {
+    if (isTokens && ethPrice && balance?.netWorth !== undefined) {
+      const val = balance.netWorth / ethPrice
+      return `${val.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ETH`
+    }
+    return balance?.value
+  }, [balance?.value, balance?.netWorth, isTokens, ethPrice])
+
+  const chartData = useMemo(() => {
+    if (!balance?.history) return []
+    if (isTokens && ethPrice) {
+      return balance.history.map(point => {
+        const val = point.value / ethPrice
+        return {
+          ...point,
+          value: val,
+          formattedValue: `${val.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ETH`
+        }
+      })
+    }
+    return balance.history
+  }, [balance?.history, isTokens, ethPrice])
+
   return (
     <section className="balance-card relative isolate grid min-h-[480px] grid-rows-[1fr_auto] gap-[22px] overflow-hidden rounded-[28px] p-8 text-white max-[700px]:min-h-[450px] max-[700px]:p-6 max-[480px]:min-h-[480px] max-[480px]:gap-[18px] max-[480px]:p-[18px] max-[360px]:p-3.5">
       <span className="balance-card__glass" aria-hidden="true" />
@@ -33,15 +59,15 @@ export function BalanceCard({ balance, error }) {
       )}
       <MetricExplainer as="div" className="balance-card__main flex min-h-[295px] flex-col items-center justify-center text-center max-[700px]:min-h-[270px]" explanation={balance.explanation}>
         <span className="eyebrow eyebrow--light">{balance.valuationLabel}</span>
-        <h2>{balance.value}</h2>
+        <h2>{displayValue}</h2>
         <span className="growth-pill"><TrendingUp aria-hidden="true" />{balance.rank} in {balance.growth?.toLowerCase()}</span>
         <div className="balance-chart" role="img" aria-label={`Estimated priced asset value chart for ${balance.growth}`}>
           <div className="balance-chart__heading">
             <span>Value history</span>
-            <small>Current prices</small>
+            <small>{isTokens ? 'ETH' : 'USD'} prices</small>
           </div>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={balance.history} margin={{ top: 8, right: 6, bottom: 0, left: 6 }}>
+            <AreaChart data={chartData} margin={{ top: 8, right: 6, bottom: 0, left: 6 }}>
               <defs>
                 <linearGradient id="balanceChartFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#ffffff" stopOpacity=".42" />

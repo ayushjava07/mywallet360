@@ -193,6 +193,7 @@ function buildWallet(address, analytics) {
 
   return {
     id: address.toLowerCase(),
+    ethPrice: analytics.ethPrice,
     analysisDays: analytics.period.id === 'ytd' ? 'ytd' : analytics.period.days,
     periodLabel,
     reportRange: {
@@ -207,6 +208,7 @@ function buildWallet(address, analytics) {
     },
     balance: {
       value: formatUsd(analytics.netWorth),
+      netWorth: analytics.netWorth,
       history: valuationHistory.map((point) => ({
         ...point,
         formattedValue: formatUsd(point.value),
@@ -318,16 +320,18 @@ function buildWallet(address, analytics) {
       outgoing: analytics.personalityFactors?.nftOutgoing || 0,
       total: analytics.personalityFactors?.nftTransfers || 0,
     },
+    pricedAssetCount: analytics.pricedAssetCount ?? analytics.valuation?.pricedAssetCount ?? 0,
     holdings: (() => {
       const rawAssets = analytics.assets || []
-      const totalRaw = rawAssets.reduce((sum, a) => sum + a.usdValue, 0)
+      const totalPriced = rawAssets.reduce((sum, a) => (a.priceAvailable ? sum + a.usdValue : sum), 0)
       return rawAssets.map((asset) => ({
         ...asset,
-        rawBalance: asset.balance,
+        rawBalance: asset.rawBalance ?? asset.balance,
         rawUsdValue: asset.usdValue,
-        balance: formatNumber(asset.balance),
-        usdValue: formatUsd(asset.usdValue),
-        percentage: totalRaw > 0 ? Math.round((asset.usdValue / totalRaw) * 100) : 0,
+        balance: asset.priceAvailable ? formatNumber(asset.balance) : asset.rawBalance ?? asset.balance,
+        usdValue: asset.priceAvailable ? formatUsd(asset.usdValue) : null,
+        percentage: totalPriced > 0 && asset.priceAvailable ? Math.round((asset.usdValue / totalPriced) * 100) : 0,
+        displayBalance: !asset.priceAvailable && asset.rawBalance ? asset.rawBalance : formatNumber(asset.balance),
       }))
     })(),
   }

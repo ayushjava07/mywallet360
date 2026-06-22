@@ -3,10 +3,15 @@ import { CalendarRange, Download, FileSpreadsheet } from 'lucide-react'
 import { highlightIcons } from '../../config/dashboard'
 import { walletService } from '../../services/walletService'
 import { Icon } from '../common/Icon'
+import { TransactionModal } from './TransactionModal'
 
-function Transaction({ item }) {
+function Transaction({ item, onClick, note }) {
   return (
-    <article className={`transaction transaction--${item.tone} relative grid min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto_minmax(72px,auto)] items-center gap-[11px] rounded-[14px] border-0 bg-transparent p-[13px_11px] max-[1050px]:grid-cols-[auto_minmax(0,1fr)_auto] max-[700px]:grid-cols-[auto_minmax(0,1fr)] max-[480px]:gap-[9px] max-[480px]:p-[9px_7px] max-[360px]:grid-cols-[auto_minmax(0,1fr)]`} tabIndex="0">
+    <article
+      className={`transaction transaction--${item.tone} relative grid min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto_minmax(72px,auto)] items-center gap-[11px] rounded-[14px] border-0 bg-transparent p-[13px_11px] max-[1050px]:grid-cols-[auto_minmax(0,1fr)_auto] max-[700px]:grid-cols-[auto_minmax(0,1fr)] max-[480px]:gap-[9px] max-[480px]:p-[9px_7px] max-[360px]:grid-cols-[auto_minmax(0,1fr)]`}
+      tabIndex="0"
+      onClick={onClick}
+    >
       <div className="transaction__visual">
         <span className={`icon-box ${item.tone}`}><Icon name={item.icon} alt="" /></span>
         <span className={`protocol-logo protocol-logo--${item.tone}`} title={item.protocol}>
@@ -20,6 +25,11 @@ function Transaction({ item }) {
           <span aria-hidden="true">•</span>
           <span className="chain-badge">{item.chain}</span>
         </div>
+        {note && (
+          <span className="transaction__note-badge">
+            🏷️ {note}
+          </span>
+        )}
       </div>
       <div className="transaction__amount">
         <strong className={item.positive ? 'positive' : ''}>{item.amount}</strong>
@@ -52,6 +62,15 @@ export function Activity({ walletAddress, transactions, highlights, periodLabel,
   const [to, setTo] = useState(reportRange.to)
   const [isDownloading, setIsDownloading] = useState(false)
   const [reportError, setReportError] = useState('')
+  const [selectedTx, setSelectedTx] = useState(null)
+  const [notes, setNotes] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('mywallet360_tx_notes') || '{}')
+    } catch {
+      return {}
+    }
+  })
+
   const visibleTransactions = showAll ? transactions : transactions.slice(0, 3)
   const isOnActivityTab = false
 
@@ -82,67 +101,92 @@ export function Activity({ walletAddress, transactions, highlights, periodLabel,
 
   return (
     <>
-    { ( 
-    <section className="activity min-[900px]:px-0.5">
-      {isOnActivityTab &&<form className="report-download" onSubmit={downloadReport}>
-        <div className="report-download__intro">
-          <span className="report-download__icon"><FileSpreadsheet aria-hidden="true" /></span>
-          <div>
-            <span className="report-download__eyebrow">Excel statement</span>
-            <strong>Download transaction report</strong>
-            <p>Get a clean statement plus raw BlobLens data for your selected date range.</p>
-            <div className="report-download__tags" aria-label="Included transaction types">
-              <span>Normal</span><span>Internal</span><span>ERC-20</span>
+      <section className="activity min-[900px]:px-0.5">
+        {isOnActivityTab && (
+          <form className="report-download" onSubmit={downloadReport}>
+            <div className="report-download__intro">
+              <span className="report-download__icon"><FileSpreadsheet aria-hidden="true" /></span>
+              <div>
+                <span className="report-download__eyebrow">Excel statement</span>
+                <strong>Download transaction report</strong>
+                <p>Get a clean statement plus raw BlobLens data for your selected date range.</p>
+                <div className="report-download__tags" aria-label="Included transaction types">
+                  <span>Normal</span><span>Internal</span><span>ERC-20</span>
+                </div>
+              </div>
+            </div>
+            <div className="report-download__controls">
+              <div className="report-download__range">
+                <span className="report-download__range-icon"><CalendarRange aria-hidden="true" /></span>
+                <label>
+                  <span>From</span>
+                  <input type="date" value={from} max={to || maxReportDate} onChange={(event) => setFrom(event.target.value)} />
+                </label>
+                <i aria-hidden="true" />
+                <label>
+                  <span>To</span>
+                  <input type="date" value={to} min={from} max={maxReportDate} onChange={(event) => setTo(event.target.value)} />
+                </label>
+              </div>
+              <button className="report-download__button" type="submit" disabled={isDownloading}>
+                <Download aria-hidden="true" />
+                <span>{isDownloading ? 'Creating report...' : 'Download Report'}</span>
+              </button>
+              {reportError && <span className="report-download__error" role="alert">{reportError}</span>}
+            </div>
+          </form>
+        )}
+        <div className="activity-layout grid grid-cols-[minmax(0,1.65fr)_minmax(300px,.9fr)] items-stretch gap-[18px] max-[1050px]:grid-cols-[minmax(0,1.35fr)_minmax(270px,.85fr)] max-[1050px]:gap-[14px] max-[899px]:grid-cols-1">
+          <div className="card activity-feed rounded-3xl border-0 p-[22px] max-[1050px]:p-[18px] max-[480px]:rounded-[20px] max-[480px]:p-3.5">
+            <div className="activity-card__heading flex min-h-[35px] items-center justify-between gap-4">
+              <div className="grid gap-[3px]"><span>{periodLabel}</span><h2>Recent Activity</h2></div>
+              {transactions.length > 3 && (
+                <button type="button" onClick={() => setShowAll((value) => !value)}>
+                  {showAll ? 'Show Less' : 'See All'}
+                </button>
+              )}
+            </div>
+            <div className="transaction-list mt-3 grid grid-cols-1 gap-[3px]">
+              {visibleTransactions.map((item) => (
+                <Transaction
+                  item={item}
+                  key={item.title}
+                  onClick={() => setSelectedTx(item)}
+                  note={notes[item.title]}
+                />
+              ))}
+              {!transactions.length && <p>No normal transactions found during this period.</p>}
             </div>
           </div>
-        </div>
-        <div className="report-download__controls">
-          <div className="report-download__range">
-            <span className="report-download__range-icon"><CalendarRange aria-hidden="true" /></span>
-            <label>
-              <span>From</span>
-              <input type="date" value={from} max={to || maxReportDate} onChange={(event) => setFrom(event.target.value)} />
-            </label>
-            <i aria-hidden="true" />
-            <label>
-              <span>To</span>
-              <input type="date" value={to} min={from} max={maxReportDate} onChange={(event) => setTo(event.target.value)} />
-            </label>
-          </div>
-          <button className="report-download__button" type="submit" disabled={isDownloading}>
-            <Download aria-hidden="true" />
-            <span>{isDownloading ? 'Creating report...' : 'Download Report'}</span>
-          </button>
-          {reportError && <span className="report-download__error" role="alert">{reportError}</span>}
-        </div>
-      </form>}
-      <div className="activity-layout grid grid-cols-[minmax(0,1.65fr)_minmax(300px,.9fr)] items-stretch gap-[18px] max-[1050px]:grid-cols-[minmax(0,1.35fr)_minmax(270px,.85fr)] max-[1050px]:gap-[14px] max-[899px]:grid-cols-1">
-        <div className="card activity-feed rounded-3xl border-0 p-[22px] max-[1050px]:p-[18px] max-[480px]:rounded-[20px] max-[480px]:p-3.5">
-          <div className="activity-card__heading flex min-h-[35px] items-center justify-between gap-4">
-            <div className="grid gap-[3px]"><span>{periodLabel}</span><h2>Recent Activity</h2></div>
-            {transactions.length > 3 && (
-              <button type="button" onClick={() => setShowAll((value) => !value)}>
-                {showAll ? 'Show Less' : 'See All'}
-              </button>
-            )}
-          </div>
-          <div className="transaction-list mt-3 grid grid-cols-1 gap-[3px]">
-            {visibleTransactions.map((item) => <Transaction item={item} key={item.title} />)}
-            {!transactions.length && <p>No normal transactions found during this period.</p>}
-          </div>
-        </div>
 
-        <aside className="card highlights-card rounded-3xl border-0 p-[22px] max-[1050px]:p-[18px] max-[480px]:rounded-[20px] max-[480px]:p-3.5">
-          <div className="activity-card__heading flex min-h-[35px] items-center justify-between gap-4">
-            <div className="grid gap-[3px]"><span>{periodLabel}</span><h2>Key Highlights</h2></div>
-          </div>
-          <div className="highlights-list mt-3 grid gap-[7px] max-[899px]:grid-cols-2 max-[480px]:grid-cols-1">
-            {highlights.map((highlight) => <Highlight highlight={highlight} key={highlight.label} />)}
-          </div>
-        </aside>
-      </div>
-    </section>
-  )}
+          <aside className="card highlights-card rounded-3xl border-0 p-[22px] max-[1050px]:p-[18px] max-[480px]:rounded-[20px] max-[480px]:p-3.5">
+            <div className="activity-card__heading flex min-h-[35px] items-center justify-between gap-4">
+              <div className="grid gap-[3px]"><span>{periodLabel}</span><h2>Key Highlights</h2></div>
+            </div>
+            <div className="highlights-list mt-3 grid gap-[7px] max-[899px]:grid-cols-2 max-[480px]:grid-cols-1">
+              {highlights.map((highlight) => <Highlight highlight={highlight} key={highlight.label} />)}
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      {selectedTx && (
+        <TransactionModal
+          tx={selectedTx}
+          onClose={() => setSelectedTx(null)}
+          onNoteSave={(hash, text) => {
+            setNotes((prev) => {
+              if (text) {
+                return { ...prev, [hash]: text }
+              } else {
+                const copy = { ...prev }
+                delete copy[hash]
+                return copy
+              }
+            })
+          }}
+        />
+      )}
     </>
   )
 }
